@@ -1,0 +1,35 @@
+{
+  "$schema": "https://wame.sk/teamwork-tasks-from-dnr.schema.json",
+  "output_dir": "docs",
+  "output_basename": "auto",
+  "language": "auto",
+  "priorities": {
+    "high_keywords": ["migrácia", "model", "service", "logika", "engine", "schema", "core", "foundation"],
+    "medium_keywords": ["nova", "mail", "hromad", "bulk", "akcia", "ui", "test"],
+    "low_keywords": ["audit", "log", "voliteľn", "nice"]
+  },
+  "task_size_target": {
+    "min_tasks_per_tasklist": 6,
+    "max_tasks_per_tasklist": 12,
+    "min_minutes_per_task": 15,
+    "max_minutes_per_task": 480
+  },
+  "xlsx_layout": {
+    "header_fill": "1F4E79",
+    "tasklist_fill": "D9E2F3",
+    "column_widths": {
+      "tasklist": 40,
+      "task": 60,
+      "description": 110,
+      "assign_to": 20,
+      "start_date": 14,
+      "due_date": 14,
+      "priority": 10,
+      "estimated_time": 14,
+      "tags": 14,
+      "status": 14
+    }
+  },
+  "include_tags": false,
+  "default_status": "Active"
+}

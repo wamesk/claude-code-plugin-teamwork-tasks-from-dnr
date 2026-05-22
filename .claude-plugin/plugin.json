@@ -1,0 +1,8 @@
+{
+  "name": "teamwork-tasks-from-dnr",
+  "description": "Generate Teamwork.com import-ready task plan (XLSX + Markdown) from a 'Detailný návrh riešenia' (DNR) document. LLM-powered extraction of tasklists, business-friendly task names, acceptance criteria, and technical plans. Multi-language (sk/en/cs).",
+  "author": {
+    "name": "Stanislav Červeňák",
+    "email": "info@wame.sk"
+  }
+}

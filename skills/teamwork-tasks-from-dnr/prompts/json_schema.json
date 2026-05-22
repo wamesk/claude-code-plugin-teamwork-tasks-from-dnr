@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Teamwork Tasks Plan",
+  "type": "object",
+  "required": ["metadata", "tasklists"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["title", "language", "total_md_estimate"],
+      "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "client": {"type": "string"},
+        "project_ref": {"type": "string"},
+        "language": {"enum": ["sk", "en", "cs"]},
+        "total_md_estimate": {"type": "number", "minimum": 0.0625},
+        "source_dnr_path": {"type": "string"},
+        "generated_at": {"type": "string"}
+      }
+    },
+    "tasklists": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "tasks"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "section_ref": {"type": "string"},
+          "description": {"type": "string"},
+          "md_estimate": {"type": "number", "minimum": 0.0625},
+          "tasks": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["name", "priority", "estimated_minutes", "goal", "acceptance_criteria", "technical_plan"],
+              "properties": {
+                "name": {"type": "string", "minLength": 1},
+                "priority": {"enum": ["High", "Medium", "Low"]},
+                "estimated_minutes": {"type": "integer", "minimum": 15, "maximum": 480},
+                "goal": {"type": "string", "minLength": 1},
+                "acceptance_criteria": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {"type": "string", "minLength": 1}
+                },
+                "dependencies": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "technical_plan": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}
