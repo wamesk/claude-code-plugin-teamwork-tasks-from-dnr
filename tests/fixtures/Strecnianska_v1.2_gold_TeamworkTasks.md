@@ -17,26 +17,26 @@ Sprievodný súbor `*_TeamworkTasks.xlsx` v tom istom adresári je 1:1 import-re
 
 | # | Task list | Tasky | MD | Hodín |
 |---|---|---|---|---|
-| 1 | Rozšírenie #1 — Ročný zálohový predpis (DNR 4.1) | 9 | 2.5 | 20.0 |
-| 2 | Rozšírenie #2 — Automatické párovanie platieb z banky (DNR 4.2) | 8 | 1.5 | 12.0 |
-| 3 | Rozšírenie #3 — Ročné zúčtovanie služieb (DNR 4.3) | 8 | 2 | 16.0 |
+| 1 | 4.1 Ročný zálohový predpis | 9 | 2.5 | 20.0 |
+| 2 | 4.2 Automatické párovanie platieb z banky | 8 | 1.5 | 12.0 |
+| 3 | 4.3 Ročné zúčtovanie služieb | 8 | 2 | 16.0 |
 | **Spolu** | | **25** | **6** | **48.0** |
 
 ---
 
-## TASK LIST 1: Rozšírenie #1 — Ročný zálohový predpis (DNR 4.1)
+## TASK LIST 1: 4.1 Ročný zálohový predpis
 
 ### Pôvodné znenie DNR
 
 > ROZŠÍRENIE Č. 1 — ROČNÝ ZÁLOHOVÝ PREDPIS (DNR sekcia 4.1)
 >
-> == 4.1.1 Biznisový účel ==
+> ** 4.1.1 Biznisový účel **
 > Namiesto 12 mesačných faktúr vznikne na začiatku roka jeden PDF dokument — ročný zálohový predpis — ktorý slúži ako daňový doklad pre celý fakturačný rok. Obsahuje rozpis 12 rovnakých splátok so splatnosťou k definovanému dňu mesiaca. Nájomca platí 12× ročne s rovnakým variabilným symbolom; systém platby automaticky páruje (viď modul 4.2).
 >
-> == Poznámka k mesačnej fakturácii ==
+> ** Poznámka k mesačnej fakturácii **
 > Režim ročného zálohového predpisu nahrádza mesačné faktúry pre konkrétne zmluvy. Existujúca funkcia mesačnej fakturácie zostáva v systéme pre prípadné budúce použitie, no v dennej prevádzke Družstva lekárov sa nebude bežne používať.
 >
-> == 4.1.2 Zásadné rozhodnutia ==
+> ** 4.1.2 Zásadné rozhodnutia **
 > • Fakturačné obdobie: Vždy kalendárny rok (január — december).
 > • Začiatok zmluvy v priebehu roka: Zmluvy začínajú vždy 1. dňom mesiaca. V rámci mesiaca sa nealikvotuje. Ročný predpis sa pripraví od mesiaca nástupu do decembra; od 1. januára nasledujúceho roka štandardný 12-mesačný predpis. (v1.2)
 > • Obsah predpisu: Nájomné (prenajatý priestor + podiel na spoločných priestoroch) + služby spojené s nájmom (elektrina, voda/stočné, UK a TUV). Zoznam je otvorený — v budúcnosti môžu pribudnúť ďalšie položky.
@@ -52,7 +52,7 @@ Sprievodný súbor `*_TeamworkTasks.xlsx` v tom istom adresári je 1:1 import-re
 > • Preplatok z minulého roka: Preplatok sa NEPRENÁŠA do nového predpisu. Klient ho vyrovná vrátením peňazí nájomcovi mimo systém. Nájomca tak platí celý rok v plnej výške bez zníženia januárovej splátky. (v1.2)
 > • Príprava a odoslanie: Dvojkrokový proces: (1) admin zvolí „Pripraviť PDF" v detaile zmluvy, skontroluje položky a sumy, (2) zvolí „Odoslať e-mailom" — PDF odoslané klientovi na e-mail evidovaný u zákazníka.
 >
-> == 4.1.3 Scenáre použitia ==
+> ** 4.1.3 Scenáre použitia **
 >
 > Scenár 1 — Ročné pripravenie predpisu (začiatok roka):
 > 1. Admin otvorí detail zmluvy a zvolí „Pripraviť ročný zálohový predpis".
@@ -81,10 +81,10 @@ Sprievodný súbor `*_TeamworkTasks.xlsx` v tom istom adresári je 1:1 import-re
 > 16. Pôvodný ročný zálohový predpis zostáva nedotknutý; nájomca doplatí splátky podľa pôvodného plánu až do skutočného konca prenájmu.
 > 17. Pri ročnom zúčtovaní systém započíta iba reálne odbehnuté mesiace zmluvy. Prípadný preplatok/nedoplatok sa vyrieši cez štandardný proces ročného zúčtovania na konci roka — nie počas roka.
 >
-> == 4.1.4 Odhad pracnosti ==
+> ** 4.1.4 Odhad pracnosti **
 > Ročný zálohový predpis: 2,5 MD (logika prípravy predpisu, formát PDF podľa vzoru SOMPET, hromadná akcia, alikvótny výpočet).
 
-### Task 1.1 — Príprava systémových štruktúr pre ročný zálohový predpis
+### Task 1.1 — 4.1.1 Príprava systémových štruktúr pre ročný zálohový predpis
 
 **Priorita:** High · **Odhad:** 2h (120 min)
 
@@ -119,7 +119,7 @@ Pripraviť dátový základ pre ročný zálohový predpis. Existujúca tabuľka
 - Rollback enumu zachová pôvodné `'1','2','3'` — použiť raw `ALTER TABLE`, nie `change()`.
 - `payment_date` na `invoice_payments` odlišuje dátum pripísania od `created_at` (potrebné pre bmail import).
 
-### Task 1.2 — Evidencia mesačných splátok v rámci predpisu
+### Task 1.2 — 4.1.2 Evidencia mesačných splátok v rámci predpisu
 
 **Priorita:** High · **Odhad:** 1.5h (90 min)
 
@@ -153,7 +153,7 @@ Vytvoriť Eloquent model `InvoiceScheduleInstallment` s relations na `Invoice` a
 ### Acceptance test
 - Pest `InvoiceScheduleInstallmentTest::test_status_changes_with_payments` overí prechod stavov.
 
-### Task 1.3 — Logika výpočtu ročného zálohového predpisu
+### Task 1.3 — 4.1.3 Logika výpočtu ročného zálohového predpisu
 
 **Priorita:** High · **Odhad:** 3h (180 min)
 
@@ -199,7 +199,7 @@ class AnnualAdvanceBuilder {
 - Položky bez `premise_id` (paušál) → samostatný invoice_item bez priestoru.
 - Viacero rovnakých priestorov → zoskupiť per `premise_id` + `title`.
 
-### Task 1.4 — Funkcia „Pripraviť ročný zálohový predpis" v detaile zmluvy
+### Task 1.4 — 4.1.4 Funkcia „Pripraviť ročný zálohový predpis" v detaile zmluvy
 
 **Priorita:** High · **Odhad:** 2h (120 min)
 
@@ -233,7 +233,7 @@ Vystaviť `AnnualAdvanceBuilder` ako Nova action v detaile zmluvy. Formulár (ro
 - Preview riešený redirectom na Invoice detail s HasMany installments (jednoduché).
 - Ak ostane čas — vlastný ResourceTool `nova-components/AnnualAdvancePreview` so side-by-side náhľadom pred submit.
 
-### Task 1.5 — PDF výstup ročného zálohového predpisu (vzor SOMPET)
+### Task 1.5 — 4.1.5 PDF výstup ročného zálohového predpisu (vzor SOMPET)
 
 **Priorita:** High · **Odhad:** 3h (180 min)
 
@@ -289,7 +289,7 @@ Pripraviť Blade view `invoice/annual_advance.blade.php` v štýle vzoru SOMPET 
 ### CSS
 `public/css/invoice.css` — pridať `.installments` (border, padding) a `.premise-header` (light gray bg, bold).
 
-### Task 1.6 — Hromadné pripravenie zálohových predpisov pre všetky aktívne zmluvy
+### Task 1.6 — 4.1.6 Hromadné pripravenie zálohových predpisov pre všetky aktívne zmluvy
 
 **Priorita:** Medium · **Odhad:** 2h (120 min)
 
@@ -326,7 +326,7 @@ Registrácia vo `Contract::filters()`.
 ### Registrácia akcie
 `Contract::actions()` — pridať `PrepareAnnualAdvanceBulk`.
 
-### Task 1.7 — Odoslanie zálohového predpisu nájomcovi e-mailom
+### Task 1.7 — 4.1.7 Odoslanie zálohového predpisu nájomcovi e-mailom
 
 **Priorita:** Medium · **Odhad:** 2h (120 min)
 
@@ -368,7 +368,7 @@ $invoice->update(['sent_at' => now()]);
 ### Nova UI
 `app/Nova/Invoice/ButtonsCard.php` — tlačidlo „Odoslať e-mailom" musí byť dostupné aj pre `type = '4'`.
 
-### Task 1.8 — Číselný rad ZP a evidencia variabilných symbolov zmlúv
+### Task 1.8 — 4.1.8 Číselný rad ZP a evidencia variabilných symbolov zmlúv
 
 **Priorita:** High · **Odhad:** 1h (60 min)
 
@@ -429,7 +429,7 @@ InvoicePattern::create([
 - Konflikt VS pri importe historického → ValidationException.
 - Soft-deleted zmluvy: VS sa môže reusnúť.
 
-### Task 1.9 — Testovanie a overenie ročného zálohového predpisu
+### Task 1.9 — 4.1.9 Testovanie a overenie ročného zálohového predpisu
 
 **Priorita:** Medium · **Odhad:** 3.5h (210 min)
 
@@ -474,16 +474,16 @@ Pest feature/unit testy pre `AnnualAdvanceBuilder`, Nova akcie a PDF generátor.
 
 ---
 
-## TASK LIST 2: Rozšírenie #2 — Automatické párovanie platieb z banky (DNR 4.2)
+## TASK LIST 2: 4.2 Automatické párovanie platieb z banky
 
 ### Pôvodné znenie DNR
 
 > ROZŠÍRENIE Č. 2 — AUTOMATICKÉ PÁROVANIE PLATIEB Z BANKY (DNR sekcia 4.2)
 >
-> == 4.2.1 Biznisový účel ==
+> ** 4.2.1 Biznisový účel **
 > Klient dostáva od Tatra banky mailové notifikácie pri každom pohybe na účte. Systém raz denne načíta nové notifikácie z vyhradenej mailovej schránky, prečíta z nich sumu, variabilný symbol a dátum platby, a automaticky priradí kreditné platby k jednotlivým mesačným splátkam zálohových predpisov.
 >
-> == 4.2.2 Zásadné rozhodnutia ==
+> ** 4.2.2 Zásadné rozhodnutia **
 > • Banka: Tatra banka, Slovakia.
 > • Mailová schránka: WAME systémová — klient nepotrebuje zriaďovať žiadnu schránku ani podúčet. WAME priradí klientovi unikátnu e-mailovú adresu, ktorú si klient nastaví v internetbankingu ako cieľ notifikácií.
 > • Typy platieb: Iba kredity (prichádzajúce platby). Debety (odchádzajúce platby) systém ignoruje.
@@ -496,26 +496,26 @@ Pest feature/unit testy pre `AnnualAdvanceBuilder`, Nova akcie a PDF generátor.
 > • Frekvencia spracovania: Raz denne (v nočných hodinách).
 > • Počiatočný stav pri spustení systému: Pre každú zmluvu admin vytvorí jednu fiktívnu úvodnú faktúru v sume doteraz zaplatených platieb (saldo k dátumu spustenia) a k nej manuálne pridá uhrádzajúcu platbu v rovnakej sume. Týmto sa stav účtu nájomcu vyrovná a od daného dátumu systém pokračuje štandardne. (v1.2)
 >
-> == 4.2.3 Postup párovania ==
+> ** 4.2.3 Postup párovania **
 > 18. Systém raz denne načíta všetky nové e-maily zo systémovej schránky.
 > 19. Pre každý e-mail: overí odosielateľa (Tatra banka).
 > 20. Prečíta sumu, variabilný symbol, dátum pripísania a smer platby. Ak je smer = debet → preskočí.
 > 21. Pre kredit: nájde zmluvu s daným VS. Ak nenájde → zaradí do „Nespárované platby", platba sa neeviduje.
 > 22. Ak nájde: spáruje platbu s najstaršou nespárovanou splátkou danej zmluvy. Vytvorí záznam o platbe a systém automaticky prepočíta stav splátky (neuhradená → čiastočne → uhradená → preplatok). Ak je platba vyššia, prebytok sa použije na ďalšiu najstaršiu nespárovanú splátku. (v1.2)
 >
-> == 4.2.4 Práca admina ==
+> ** 4.2.4 Práca admina **
 > • Zoznam „Bmail importy" — chronologický prehľad všetkých prichádzajúcich notifikácií s filtrom podľa stavu (spárované / nespárované / duplicita / ignorované debety).
 > • Zoznam „Nespárované platby" — rýchly prehľad platieb, ktoré vyžadujú manuálny zásah. Akcia „Priradiť k zmluve" umožní adminovi vybrať zmluvu a evidovať platbu ručne.
 > • Detail zmluvy zobrazuje históriu platieb — chronologický zoznam automatických aj manuálnych platieb s väzbou na pôvodný e-mail.
 > • Úprava platby — admin môže existujúcu platbu upraviť (zmeniť sumu) alebo manuálne pridať novú. Slúži najmä na rozdelenie jednej veľkej platby medzi viac splátok pri nájomcoch, ktorí platia naraz za viac mesiacov. (v1.2)
 >
-> == Edge-case — platba s historickým VS ==
+> ** Edge-case — platba s historickým VS **
 > Môže nastať situácia, kedy príde platba s variabilným symbolom, ktorý existoval v minulosti, no zmluva už nie je aktívna (napr. odsťahovaný nájomca). Takáto platba zostane v stave „Nespárovaná" a vyžaduje manuálne rozhodnutie admina. Bez ďalšej automatizácie.
 >
-> == 4.2.5 Odhad pracnosti ==
+> ** 4.2.5 Odhad pracnosti **
 > Automatické párovanie platieb: 1,5 MD (čítanie e-mailov, rozpoznanie obsahu, priraďovacia logika, prehľady pre admina).
 
-### Task 2.1 — Evidencia notifikácií z banky v systéme
+### Task 2.1 — 4.2.1 Evidencia notifikácií z banky v systéme
 
 **Priorita:** High · **Odhad:** 1h (60 min)
 
@@ -547,7 +547,7 @@ Vytvoriť tabuľku `bmail_imports` pre 1-záznam-per-notifikácia. Uchová raw b
 - `timestampsTz`, `softDeletesTz`.
 - Index `['status', 'created_at']`, index `'parsed_variable_symbol'`.
 
-### Task 2.2 — Prehľad bankových notifikácií a manuálny zásah
+### Task 2.2 — 4.2.2 Prehľad bankových notifikácií a manuálny zásah
 
 **Priorita:** High · **Odhad:** 1.5h (90 min)
 
@@ -590,7 +590,7 @@ Eloquent `BmailImport` model + read-only Nova resource s farebnými badge na sta
 ### Menu
 Pridať do `NovaServiceProvider::mainMenu()` položku „Bmail importy".
 
-### Task 2.3 — Pripojenie systému na bankovú schránku
+### Task 2.3 — 4.2.3 Pripojenie systému na bankovú schránku
 
 **Priorita:** High · **Odhad:** 1h (60 min)
 
@@ -650,7 +650,7 @@ php artisan vendor:publish --provider="Webklex\IMAP\Providers\LaravelServiceProv
 ### Závislosti
 - Ops vytvorí schránku `bmail-strecnianska@reality.wame.sk` a heslo doplní do `.env`.
 
-### Task 2.4 — Rozpoznanie obsahu notifikácie z Tatra banky
+### Task 2.4 — 4.2.4 Rozpoznanie obsahu notifikácie z Tatra banky
 
 **Priorita:** High · **Odhad:** 3h (180 min)
 
@@ -714,7 +714,7 @@ public function parse(BmailImport $import): BmailImport {
 - HTML multipart → preferovať text/plain; fallback `strip_tags($html)`.
 - Zmena formátu zo strany banky → status `parse_failed`, manuálne riešenie.
 
-### Task 2.5 — Automatické párovanie platieb so splátkami
+### Task 2.5 — 4.2.5 Automatické párovanie platieb so splátkami
 
 **Priorita:** High · **Odhad:** 3h (180 min)
 
@@ -780,7 +780,7 @@ public function assignManual(BmailImport $i, string $contractId, float $amount, 
 - `amount <= 0` → `parse_failed`.
 - Platba presahujúca všetky splátky: posledná = `overpay`, zvyšok poznámka, manuálne.
 
-### Task 2.6 — Denné automatické sťahovanie platieb
+### Task 2.6 — 4.2.6 Denné automatické sťahovanie platieb
 
 **Priorita:** High · **Odhad:** 1h (60 min)
 
@@ -839,7 +839,7 @@ $schedule->command('bmail:import')
 ### Deploy
 - Overiť že `crontab -e` na produkcii má `* * * * * cd /path && php artisan schedule:run >> /dev/null 2>&1`.
 
-### Task 2.7 — Manuálna úprava a rozdelenie platieb
+### Task 2.7 — 4.2.7 Manuálna úprava a rozdelenie platieb
 
 **Priorita:** Medium · **Odhad:** 1h (60 min)
 
@@ -870,7 +870,7 @@ Nova action `SplitPayment` v detaile `InvoicePayment` rozdelí jednu platbu na d
 ### BmailImport assign
 - Akcia `AssignBmailToContract` z Task 2.2 už pokrýva manuálne pridelenie.
 
-### Task 2.8 — Testovanie a overenie párovania platieb
+### Task 2.8 — 4.2.8 Testovanie a overenie párovania platieb
 
 **Priorita:** Medium · **Odhad:** 0.5h (30 min)
 
@@ -904,16 +904,16 @@ Pest feature testy pre kompletný flow `bmail:import` → `TatraBankaParser` →
 
 ---
 
-## TASK LIST 3: Rozšírenie #3 — Ročné zúčtovanie služieb (DNR 4.3)
+## TASK LIST 3: 4.3 Ročné zúčtovanie služieb
 
 ### Pôvodné znenie DNR
 
 > ROZŠÍRENIE Č. 3 — ROČNÉ ZÚČTOVANIE SLUŽIEB (DNR sekcia 4.3)
 >
-> == 4.3.1 Biznisový účel ==
+> ** 4.3.1 Biznisový účel **
 > Raz ročne (za kalendárny rok január — december) sa vykoná finančné vyrovnanie medzi skutočnými nákladmi na služby (elektrina, voda/stočné, UK a TUV) a zálohami zaplatenými nájomcami počas roka. Výstupom je pre každého nájomcu individuálny PDF doklad „Ročné zúčtovanie" ukazujúci: ročné zálohy (koľko zaplatil), skutočná spotreba (koľko spotreboval), preplatok alebo nedoplatok.
 >
-> == 4.3.2 Zásadné rozhodnutia ==
+> ** 4.3.2 Zásadné rozhodnutia **
 > • Obdobie: Vždy kalendárny rok (január — december).
 > • Zadávanie celkových nákladov budovy: Manuálne po konci roka — admin zadá celkovú ročnú sumu za elektrinu, vodu/stočné, UK a TUV.
 > • Druhy zúčtovaných služieb: Elektrina, voda/stočné, UK a TUV — všetky v jednom zúčtovaní (naraz).
@@ -930,7 +930,7 @@ Pest feature testy pre kompletný flow `bmail:import` → `TatraBankaParser` →
 > • Oprava jednotlivého výsledku po vygenerovaní: Ak sa po vygenerovaní zúčtovania zistí chyba pri jednom nájomcovi, admin môže ručne upraviť hodnoty pre tohto konkrétneho zákazníka a vygenerovať mu opravené PDF. Ostatné zúčtovania sa neprepočítavajú. Bežne sa neočakáva, ide o ošetrenie výnimočných situácií. (v1.2)
 > • Pripravený doklad preplatku/nedoplatku: Systém pripraví len informačný dokument „Ročné zúčtovanie" s číslami. Faktúry alebo dobropisy na vyrovnanie rieši klient mimo systém.
 >
-> == 4.3.3 Algoritmus výpočtu (príklad pre elektrinu) ==
+> ** 4.3.3 Algoritmus výpočtu (príklad pre elektrinu) **
 > Vstupy: celkový ročný náklad budovy za elektrinu = 50 000 €. V budove je 20 priestorov (spolu 1 000 m²), z toho:
 > • 5 priestorov s podružným meraním (dynamická položka v zmluve) — 300 m², skutočná spotreba 80 000 kWh.
 > • 12 priestorov bez merania (fixná záloha v zmluve) — 550 m², bez údajov o spotrebe.
@@ -944,10 +944,10 @@ Pest feature testy pre kompletný flow `bmail:import` → `TatraBankaParser` →
 > 26. Náklad priestoru napr. 40 m² = 40 × koeficient.
 > 27. Preplatok/nedoplatok = zálohy zaplatené za rok − skutočný náklad.
 >
-> == Dospresnenie algoritmu v príprave ==
+> ** Dospresnenie algoritmu v príprave **
 > Presný vzorec rozdelenia medzi merané a nemerané priestory (či sa jednotková cena počíta spoločne alebo zvlášť) má viacero možných variantov. Na začiatku prípravy prebehne 60—90 minútový analytický workshop s klientom, kde sa rozhodnutie zafixuje a odsúhlasí.
 >
-> == 4.3.4 Scenár použitia ==
+> ** 4.3.4 Scenár použitia **
 > 28. Admin v januári 2027 v module „Ročné zúčtovania" vytvorí nové zúčtovanie pre rok 2026.
 > 29. Systém predvyplní sumu všetkých platieb a spotreby z meraní za rok 2026.
 > 30. Admin zadá celkové ročné náklady budovy (elektrina, voda/stočné, UK a TUV).
@@ -958,10 +958,10 @@ Pest feature testy pre kompletný flow `bmail:import` → `TatraBankaParser` →
 > 35. Ak sa po vygenerovaní zistí chyba u konkrétneho nájomcu, admin ručne upraví jeho hodnoty a vygeneruje len jeho opravené PDF; ostatné zúčtovania sa neprepočítavajú. (v1.2)
 > 36. Klient (družstvo) prípadné preplatky/nedoplatky vyrovná mimo systém.
 >
-> == 4.3.5 Odhad pracnosti ==
+> ** 4.3.5 Odhad pracnosti **
 > Ročné zúčtovanie služieb: 2 MD (kalkulačná logika, sumárny prehľad, formát PDF, hromadné pripravenie a odosielanie).
 
-### Task 3.1 — Evidencia ročného zúčtovania služieb v systéme
+### Task 3.1 — 4.3.1 Evidencia ročného zúčtovania služieb v systéme
 
 **Priorita:** High · **Odhad:** 2h (120 min)
 
@@ -1006,7 +1006,7 @@ Dve nové tabuľky: `annual_settlements` (master per rok per company) a `annual_
 - `timestampsTz`, `softDeletesTz`.
 - Index `[annual_settlement_id, contract_id, service_type]`.
 
-### Task 3.2 — Štruktúra údajov o vyúčtovaní per zmluva a priestor
+### Task 3.2 — 4.3.2 Štruktúra údajov o vyúčtovaní per zmluva a priestor
 
 **Priorita:** High · **Odhad:** 1h (60 min)
 
@@ -1038,7 +1038,7 @@ Eloquent modely `AnnualSettlement` + `AnnualSettlementItem` so scope-mi a helper
 - `app/Enums/SettlementMeasurementMode.php` (metered/unmetered/own_connection).
 - `app/Enums/SettlementStatus.php` (draft/approved/sent).
 
-### Task 3.3 — Výpočtový engine ročného zúčtovania (kľúčový bod)
+### Task 3.3 — 4.3.3 Výpočtový engine ročného zúčtovania (kľúčový bod)
 
 **Priorita:** High · **Odhad:** 5h (300 min)
 
@@ -1124,7 +1124,7 @@ private function paidAdvanceFor($contractId, $premiseId, $service): float {
 - Zaokrúhľovanie: 2 desatinné v `final_cost`, vyššia presnosť v `calculation_metadata`.
 - Priestor správcu bez zmluvy: m² v deliteľi, ale `final_cost` ide na firmu (samostatný riadok bez contract_id alebo pole `building_overhead` v metadata).
 
-### Task 3.4 — Rozhranie pre prípravu, kontrolu a schválenie zúčtovania
+### Task 3.4 — 4.3.4 Rozhranie pre prípravu, kontrolu a schválenie zúčtovania
 
 **Priorita:** High · **Odhad:** 2h (120 min)
 
@@ -1163,7 +1163,7 @@ Nova resources pre `AnnualSettlement` a `AnnualSettlementItem` s tromi akciami (
 ### Authorization
 - Po `approved`: úprava `final_cost` zakázaná (Policy `update`), zostáva otvorená iba akcia „Regenerovať jedno PDF" (Task 3.7).
 
-### Task 3.5 — PDF výstup ročného zúčtovania pre nájomcu
+### Task 3.5 — 4.3.5 PDF výstup ročného zúčtovania pre nájomcu
 
 **Priorita:** High · **Odhad:** 3h (180 min)
 
@@ -1208,7 +1208,7 @@ public function generate(Contract $contract, AnnualSettlement $settlement): stri
 ### CSS
 `public/css/settlement.css` (analógia k `invoice.css`).
 
-### Task 3.6 — Hromadné odoslanie ročných zúčtovaní e-mailom
+### Task 3.6 — 4.3.6 Hromadné odoslanie ročných zúčtovaní e-mailom
 
 **Priorita:** Medium · **Odhad:** 1h (60 min)
 
@@ -1244,7 +1244,7 @@ Mailable `AnnualSettlementMail` (pattern z `InvoiceMail`) + sprievodný e-mail v
 - Po úspechu `settlement->status = 'sent'`.
 - Error handling per zmluva (log + zhrnutie v ActionResponse).
 
-### Task 3.7 — Audit log úprav a oprava jednotlivých zúčtovaní
+### Task 3.7 — 4.3.7 Audit log úprav a oprava jednotlivých zúčtovaní
 
 **Priorita:** Low · **Odhad:** 1h (60 min)
 
@@ -1285,7 +1285,7 @@ V `app/Providers/AppServiceProvider::boot()` zaregistrovať observer.
 - Pre items danej zmluvy spustí `AnnualSettlementPdfGenerator->generate(contract, settlement)`.
 - Otvorené aj pre status = `sent` (DNR 4.3.4 bod 8).
 
-### Task 3.8 — Testovanie a overenie ročného zúčtovania
+### Task 3.8 — 4.3.8 Testovanie a overenie ročného zúčtovania
 
 **Priorita:** Medium · **Odhad:** 1h (60 min)
 

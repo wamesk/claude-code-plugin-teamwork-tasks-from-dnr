@@ -26,6 +26,22 @@ raw JSON only.
 - If the document has only one feature or no clear sectioning, create a
   single tasklist named after the document title.
 
+#### Tasklist `name` format
+
+The tasklist `name` MUST start with the DNR section number followed by a
+single space and the descriptive title. Examples:
+
+- ✅ `"4.1 Rozšírenie dátového modelu OM o nové atribúty"`
+- ✅ `"4.2 Automatické párovanie platieb z banky"`
+- ✅ `"4.3 Ročné zúčtovanie služieb"`
+- ❌ `"Rozšírenie dátového modelu OM o nové atribúty"` (no section prefix)
+- ❌ `"Rozšírenie #1 — Ročný zálohový predpis (DNR 4.1)"` (section ref in
+  parentheses at the end — wrong position, hard to scan in Teamwork lists)
+
+If the DNR does not assign a section number to the extension (rare), fall
+back to a sequential `1`, `2`, … prefix in document order. Set
+`section_ref` to the same value used in the name prefix.
+
 ### 2. Tasklist `description`
 
 The full verbatim DNR text from that extension section, including:
@@ -39,17 +55,20 @@ Format as plain text with light structure:
 ```
 ROZŠÍRENIE Č. N — <NAME> (DNR sekcia X.Y)
 
-== X.Y.1 Biznisový účel ==
+** X.Y.1 Biznisový účel **
 <paragraph>
 
-== X.Y.2 Zásadné rozhodnutia ==
+** X.Y.2 Zásadné rozhodnutia **
 • <key>: <value>
 • <key>: <value>
 ...
 ```
 
-Use `==` for sub-headings and `•` for bullets. Preserve original wording — do
-not paraphrase. Do not translate.
+Use `**` (Markdown bold) for sub-headings and `•` for bullets. Always wrap the
+sub-heading text in `**` with a single space on each side (e.g. `** 4.1.1
+Biznisový účel **`). Do NOT use `==` — older versions of this skill used
+heredoc-style `==` headings but they don't render in Teamwork. Preserve
+original wording — do not paraphrase. Do not translate.
 
 ### 3. Tasklist `section_ref` and `md_estimate`
 
@@ -79,12 +98,27 @@ If a step is not needed in the given extension, skip it.
 **Business-friendly** in the detected language. The name must be understandable
 to a project manager or client, NOT just a developer.
 
-✅ Good:
-- "Príprava systémových štruktúr pre ročný zálohový predpis"
-- "Funkcia 'Odoslať predpis e-mailom' v detaile zmluvy"
-- "Automatické párovanie platieb so splátkami"
+#### Task `name` format
 
-❌ Bad:
+Every task `name` MUST start with a hierarchical number derived from the
+parent tasklist's `section_ref` plus the 1-based task index within that
+tasklist, followed by a single space and the business-friendly title.
+
+- Tasklist `section_ref = "4.1"` → tasks are named `"4.1.1 …"`,
+  `"4.1.2 …"`, …, `"4.1.N …"`.
+- Tasklist `section_ref = "4.2"` → tasks are named `"4.2.1 …"`, …
+- Use the same numbering scheme even if the DNR doesn't enumerate
+  sub-tasks — the index is purely structural so PMs can match Teamwork
+  tasks back to the DNR section by glance.
+
+✅ Good:
+- "4.1.1 Príprava systémových štruktúr pre ročný zálohový predpis"
+- "4.1.4 Funkcia 'Odoslať predpis e-mailom' v detaile zmluvy"
+- "4.2.5 Automatické párovanie platieb so splátkami"
+
+❌ Bad (no section number, or technical jargon):
+- "Príprava systémových štruktúr pre ročný zálohový predpis" (missing
+  `4.1.1` prefix)
 - "DB migrations + enum"
 - "Add InvoiceScheduleInstallment model"
 - "PaymentMatcher service"
@@ -182,3 +216,6 @@ Before returning, verify:
 - [ ] Language is consistent across all output strings.
 - [ ] Task names are business-friendly.
 - [ ] Acceptance criteria are user-facing, not implementation details.
+- [ ] Each tasklist `name` starts with `<section_ref> ` (e.g. `4.1 `).
+- [ ] Each task `name` starts with `<section_ref>.<index> ` (e.g. `4.1.1 `).
+- [ ] Description sub-headings use `** … **` bold markers, not `==`.
