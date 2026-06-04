@@ -4,6 +4,38 @@ All notable changes to the `teamwork-tasks-from-dnr` plugin are documented in
 this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-06-04
+
+### Added
+- **WAME estimate methodology** is now documented as an explicit
+  `## WAME estimate methodology` H2 block in `SKILL.md`, placed right before
+  Step 6 (the LLM extraction step). It defines the senior-engineer +
+  Claude Code model: estimates are 30–50% lower than legacy hand-written
+  ones, padded with a 15–30% buffer for risk, capped at 480 min per task and
+  rounded to 15-min steps. Six calibration anchors (CRUD endpoint, Vue
+  component, new `wamesk/*` module, schema migration, bugfix with repro,
+  bugfix without repro) are listed as sanity checks rather than as a lookup
+  table.
+- The same block is byte-identical with the corresponding section in the
+  `teamwork-task-analyze` v1.0.0 and `dnr-business` v1.2.0 plugins —
+  one source of truth, three places to keep in sync.
+- `prompts/extract_dnr_to_json.md` now references the methodology in the
+  `### 7. Task estimated_minutes` rules so the LLM extraction applies the
+  speedup + buffer factors when distributing minutes across tasks. If the
+  distribution conflicts with the calibration anchors, the prompt now
+  instructs the model to prefer the methodology and flag the conflict
+  rather than silently inflating.
+
+### Changed
+- No schema, XLSX, or Markdown output change — `estimated_minutes` is still
+  an integer column. The methodology only affects **how** the model picks
+  the number, not the schema or the renderer.
+- Rationale captured directly in SKILL.md: legacy estimates were ~2× too
+  high and made us non-competitive; the manual workaround was to reduce
+  them by hand. The methodology encodes the same judgement so the same
+  engineer produces the same number twice, and competitors don't have to
+  reverse-engineer it from one-off PRs.
+
 ## [1.1.0] — 2026-06-04
 
 ### Added
