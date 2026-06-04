@@ -79,6 +79,48 @@ The script returns a JSON object with:
 
 If the user passed `--lang=<code>`, override `detected_language` with that.
 
+## WAME estimate methodology
+
+We estimate as senior engineers using Claude Code as a force multiplier.
+
+Baseline assumptions:
+- Engineer is senior in the stack of the current repo
+- Claude Code handles boilerplate / scaffolding / repetitive edits
+- Test scaffolding (Pest/PHPUnit/Vitest/Playwright) is mostly LLM-generated
+- Code review and QA are done by the same engineer (no separate review cycle)
+
+Speedup vs traditional estimate: ~30–50% faster than a hand-written estimate
+without Claude Code. Apply that reduction first.
+
+Buffer policy: after the reduction, add 15–30% buffer for:
+- unknown unknowns (undocumented API, hidden coupling)
+- environment friction (failing CI, flaky local setup)
+- review feedback that costs more than one cycle
+
+The final number must:
+- be a multiple of 15 minutes
+- be at least 15 minutes for trivial tasks (rename, copy edit)
+- be at most 8 hours (480 min) per single task — bigger tasks must be split
+
+Calibration anchors (use as sanity check, not as a lookup table):
+- Single-model CRUD endpoint + Pest test: 60–120 min
+- New Vue component wired to existing API: 60–120 min
+- New module in `wamesk/*` (model + migration + controller + tests): 240–360 min
+- DB schema migration with data backfill: 180–300 min
+- Bugfix from reproducible repro: 60–180 min
+- Bugfix without repro / investigation: 120–360 min
+
+Why this matters: legacy estimates were ~2× too high and made us
+non-competitive. Reducing them manually was the workaround. This methodology
+encodes the same judgement so estimates are aggressive (we beat them in
+practice) yet still include enough buffer to survive surprises.
+
+This block is **byte-identical** with the same section in the
+`teamwork-task-analyze` and `dnr-business` plugins. When updating the
+methodology, change it in all three places.
+
+---
+
 ### Step 6 — Extract structured task plan (LLM intelligence)
 
 Read the prompt at `${PROMPT_DIR}/extract_dnr_to_json.md` (where `PROMPT_DIR`

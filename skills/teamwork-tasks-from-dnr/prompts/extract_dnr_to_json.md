@@ -145,6 +145,13 @@ Apply config hints (`priorities.high_keywords`, etc.) if provided.
 - Sum per tasklist must equal `md_estimate * 480` minutes (1 MD = 8h = 480 min).
 - Distribute proportionally to complexity (e.g. a calculator service ≈ 5h, a
   migration ≈ 1-2h, tests ≈ 1-3h).
+- **Apply the WAME estimate methodology defined in `SKILL.md` (the
+  `## WAME estimate methodology` H2 block):** estimates are produced by a
+  senior engineer using Claude Code, so they are 30–50% lower than a raw
+  hand-written estimate, then padded with a 15–30% buffer for risk. Use the
+  calibration anchors in SKILL.md as a sanity check. If your distribution
+  conflicts with those anchors, prefer the methodology and flag the
+  conflicting DNR clause in the warning field — do not silently inflate.
 
 ### 8. Task `goal`
 
