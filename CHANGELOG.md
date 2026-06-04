@@ -4,6 +4,28 @@ All notable changes to the `teamwork-tasks-from-dnr` plugin are documented in
 this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-06-04
+
+### Added
+- **Interactive role detection + assignee prompt** in the `SKILL.md`
+  workflow (new *Step 6.5*). After the JSON plan is extracted, Claude scans
+  every task name for role tags (`[BE]`, `[FE]`, `[QA]`, `[DevOps]`,
+  `[Compliance]`, …), groups them by role, and asks the user one
+  `AskUserQuestion` per detected role for an e-mail / Teamwork user to
+  pre-assign that role's tasks to. **The prompt always includes a `Skip`
+  option** so the user can leave assignment to the PM after import — no
+  role is auto-assigned without explicit consent. Single-role plans (e.g.
+  pure backend) skip the prompt entirely.
+- New optional **`assign_to`** field on every task (schema-level). When
+  set, it populates the `ASSIGN TO` column of the import XLSX (column 4)
+  and is shown in the Markdown report on the task meta line as
+  `**Pridelené:** <value>`. This is the underlying mechanism that the
+  interactive role prompt writes into; users can also set it manually in
+  the JSON plan before `--build` when they regenerate via `--from-json`.
+- `prompts/extract_dnr_to_json.md` documents the new field under section
+  *10a — Task `assign_to`* including the role-tag convention
+  (`4.1.1 [BE] …`) that powers role detection.
+
 ## [1.0.2] — 2026-06-04
 
 ### Added
@@ -78,6 +100,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   section.
 - `TAGS` column intentionally left empty; `STATUS` defaults to `Active`.
 
+[1.1.0]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.1.0
 [1.0.2]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.0.2
 [1.0.1]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.0.1
 [1.0.0]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.0.0
