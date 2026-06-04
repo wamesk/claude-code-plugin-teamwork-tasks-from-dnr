@@ -104,6 +104,45 @@ You (Claude) now perform the extraction:
    - `estimated_minutes` not divisible by 15 → round.
    - Wrong language enum → match detected.
 
+### Step 6.5 — Detect roles and optionally pre-assign tasks
+
+After the JSON validates, scan every task `name` for a role tag in square
+brackets right after the section number — the convention from the prompt is
+`<section> [ROLE] <title>` (e.g. `4.1.1 [BE] Pridanie konfigurácie …`,
+`4.3.2 [FE] Ionic AutoAddService …`). Common tags are `BE`, `FE`, `QA`,
+`DevOps`, `Compliance`, `Docs`. Tasks without a tag fall into an implicit
+`Other` bucket.
+
+**Decision logic:**
+
+- **Zero or one role detected** → skip this step entirely (nothing to ask
+  about, the PM can pre-assign the whole plan in Teamwork after import).
+- **Two or more roles detected** → ask the user **one `AskUserQuestion`
+  per role**, in role order. Each question:
+  - Header: `<ROLE> assignee` (max 12 chars — truncate if needed).
+  - Question text: `K úlohám označeným [<ROLE>] (N úloh, X.Xh) — kto má byť
+    pridelený?` (use the detected language; fall back to English if not
+    sk/cs/en).
+  - **Options must always include `Skip`** (literally as one of the
+    options, plus the harness adds the user's free-text "Other" option
+    automatically). Suggest 1–2 likely e-mails if the user mentioned any
+    in the conversation; otherwise just `Skip`.
+
+**Write the answers back into the JSON plan:**
+
+For every task whose role matches an answered role and the user picked an
+e-mail (not `Skip`), set `task["assign_to"] = "<email>"`. Leave others
+untouched. Re-validate after the edit:
+
+```bash
+python3 "$SCRIPT" --validate --json /tmp/plan.json
+```
+
+The orchestrator's `--build` step will then populate the XLSX `ASSIGN TO`
+column (and the MD `**Pridelené:**` meta line) automatically. If the user
+picks `Skip` for every role, the column stays empty and the PM assigns in
+Teamwork after import — exactly the same as before this feature existed.
+
 ### Step 7 — Confirm before write
 
 Show the user a compact summary:

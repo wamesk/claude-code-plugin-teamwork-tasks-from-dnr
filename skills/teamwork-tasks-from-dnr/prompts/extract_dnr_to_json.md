@@ -178,6 +178,15 @@ Reference earlier tasks **by name** that must be done first. Use only when the
 dependency is non-obvious (within the same tasklist, task order already
 implies dependency).
 
+### 10a. Task `assign_to` (optional)
+
+E-mail (or Teamwork display name) of the user this task should be assigned
+to. Populated in the `ASSIGN TO` column of the import XLSX and shown in the
+MD report as `**Pridelené:** <value>`. Useful when the project has a clear
+BE/FE split — for example `assign_to: "backend.dev@team.sk"` for Laravel
+tasks and `assign_to: "frontend.dev@team.sk"` for Ionic / React tasks. Leave
+unset to let the PM assign the task manually after import.
+
 ### 11. Task `technical_plan`
 
 Markdown-formatted detailed plan for the implementer:

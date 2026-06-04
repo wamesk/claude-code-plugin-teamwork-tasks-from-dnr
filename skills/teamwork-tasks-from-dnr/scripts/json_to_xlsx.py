@@ -70,6 +70,8 @@ def _build_rows(plan: dict, include_tags: bool, default_status: str) -> list[dic
             cells = [None] * 10
             cells[1] = task.get("name", "")
             cells[2] = _render_task_description(task)
+            if task.get("assign_to"):
+                cells[3] = str(task["assign_to"])
             cells[6] = task.get("priority", "")
             cells[7] = int(task.get("estimated_minutes", 0))
             if include_tags and task.get("tags"):

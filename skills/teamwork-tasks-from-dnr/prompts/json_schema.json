@@ -48,6 +48,10 @@
                   "type": "array",
                   "items": {"type": "string"}
                 },
+                "assign_to": {
+                  "type": "string",
+                  "description": "E-mail (or display name) of the Teamwork user this task should be assigned to. Populated in the ASSIGN TO column of the import XLSX."
+                },
                 "technical_plan": {"type": "string", "minLength": 1}
               }
             }

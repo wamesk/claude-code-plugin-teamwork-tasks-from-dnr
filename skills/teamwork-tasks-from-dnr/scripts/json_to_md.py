@@ -76,8 +76,11 @@ def render(plan: dict) -> str:
             hours = int(task.get("estimated_minutes", 0)) / 60
             lines.append(f"### Task {i}.{j} — {task.get('name', '')}")
             lines.append("")
-            lines.append(f"**Priorita:** {task.get('priority', '')} · "
+            meta_line = (f"**Priorita:** {task.get('priority', '')} · "
                          f"**Odhad:** {hours:g}h ({task.get('estimated_minutes', 0)} min)")
+            if task.get("assign_to"):
+                meta_line += f" · **Pridelené:** {task['assign_to']}"
+            lines.append(meta_line)
             lines.append("")
 
             lines.append("## Akceptačné kritériá")
