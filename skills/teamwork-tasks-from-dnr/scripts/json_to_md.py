@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from description_summary import append_summary_to_description
+
 
 def render(plan: dict) -> str:
     """Return the Markdown text for the plan."""
@@ -57,6 +59,7 @@ def render(plan: dict) -> str:
                  f"**{total_minutes / 480:g}** | **{total_minutes / 60:.1f}** |")
     lines.append("")
 
+    language = (md.get("language") or "sk").lower()
     for i, tl in enumerate(plan.get("tasklists", []), start=1):
         lines.append("---")
         lines.append("")
@@ -64,7 +67,8 @@ def render(plan: dict) -> str:
         lines.append("")
         lines.append("### Pôvodné znenie DNR")
         lines.append("")
-        for paragraph in (tl.get("description") or "").strip().split("\n"):
+        description_with_summary = append_summary_to_description(tl, language=language)
+        for paragraph in description_with_summary.strip().split("\n"):
             lines.append("> " + paragraph if paragraph else ">")
         lines.append("")
 

@@ -70,6 +70,14 @@ Biznisový účel **`). Do NOT use `==` — older versions of this skill used
 heredoc-style `==` headings but they don't render in Teamwork. Preserve
 original wording — do not paraphrase. Do not translate.
 
+**Note on summary acceptance criteria:** the build step (`json_to_md.py` /
+`json_to_xlsx.py`) automatically appends a `** Sumár akceptačných kritérií **`
+section to every tasklist description. It picks one representative acceptance
+criterion from each High/Medium priority task in that tasklist, prefixed with
+the task's section number. **You do NOT need to add this section manually** —
+just write clean per-task `acceptance_criteria` arrays and the renderers will
+synthesize the summary. Heading text adapts to the detected language (sk/cs/en).
+
 ### 3. Tasklist `section_ref` and `md_estimate`
 
 - `section_ref` — original section number from DNR (e.g. `"4.1"`).

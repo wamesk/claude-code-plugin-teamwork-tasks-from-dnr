@@ -15,6 +15,8 @@ import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from description_summary import append_summary_to_description
+
 HEADER = ["TASKLIST", "TASK", "DESCRIPTION", "ASSIGN TO", "START DATE",
           "DUE DATE", "PRIORITY", "ESTIMATED TIME", "TAGS", "STATUS"]
 
@@ -56,10 +58,11 @@ def _build_rows(plan: dict, include_tags: bool, default_status: str) -> list[dic
     """
     rows = [{"kind": "header", "cells": list(HEADER)}]
 
+    language = (plan.get("metadata", {}).get("language") or "sk").lower()
     for tl in plan.get("tasklists", []):
         tl_cells = [None] * 10
         tl_cells[0] = tl.get("name", "")
-        tl_cells[2] = tl.get("description", "")
+        tl_cells[2] = append_summary_to_description(tl, language=language)
         tl_cells[9] = default_status
         rows.append({"kind": "tasklist", "cells": tl_cells})
 
