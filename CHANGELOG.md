@@ -4,6 +4,22 @@ All notable changes to the `teamwork-tasks-from-dnr` plugin are documented in
 this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-06-11
+
+### Fixed
+- **XLSX corruption from illegal control characters.** `scripts/json_to_xlsx.py`
+  escaped cell text with `xml.sax.saxutils.escape`, which only escapes `&`, `<`
+  and `>` and leaves XML-1.0-illegal C0 control bytes in place (every char
+  `< 0x20` except `0x09`/`0x0A`/`0x0D`). DNR text extracted from `.docx`/`.pdf`
+  routinely carries `0x0B`, `0x0C`, `NUL` and `0x01-0x08`, producing a
+  non-wellformed `xl/sharedStrings.xml` that Excel/Teamwork reject as corrupt.
+  A new `_xml_safe` sanitizer now strips every character outside the XML 1.0
+  `Char` production and is applied to each string **before** `escape()`, while
+  preserving legal whitespace (tab and newline).
+- **Missing CHANGELOG link reference.** The footer listed `[1.1.0]`, `[1.0.2]`,
+  `[1.0.1]` and `[1.0.0]` but was missing the `[1.2.0]:` link reference even
+  though the `[1.2.0]` section existed. Added the missing reference.
+
 ## [1.2.0] — 2026-06-04
 
 ### Added
@@ -132,6 +148,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   section.
 - `TAGS` column intentionally left empty; `STATUS` defaults to `Active`.
 
+[1.2.1]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.2.1
+[1.2.0]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.2.0
 [1.1.0]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.1.0
 [1.0.2]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.0.2
 [1.0.1]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.0.1

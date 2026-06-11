@@ -11,11 +11,32 @@ No `openpyxl`, no `pandas`. Works in any Python 3.7+ environment.
 """
 from __future__ import annotations
 
+import re
 import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
 
 from description_summary import append_summary_to_description
+
+# Characters that are illegal in XML 1.0 documents. The XML 1.0 Char
+# production allows only #x9, #xA, #xD, #x20-#xD7FF, #xE000-#xFFFD and
+# #x10000-#x10FFFF. DNR text extracted from .docx/.pdf routinely carries C0
+# control bytes (e.g. 0x0B, 0x0C, NUL, 0x01-0x08) that escape() does NOT
+# strip, producing a non-wellformed sharedStrings.xml that Excel/Teamwork
+# reject as corrupt. This pattern matches every disallowed code point so it
+# can be removed before escaping.
+_XML_ILLEGAL = re.compile(
+    "[^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFD\U00010000-\U0010FFFF]"
+)
+
+
+def _xml_safe(value: str) -> str:
+    """Strip XML-1.0-illegal characters (C0 control bytes, etc.) from text.
+
+    Must be applied to every cell string BEFORE xml.sax.saxutils.escape, which
+    only escapes &, < and > and leaves illegal control characters in place.
+    """
+    return _XML_ILLEGAL.sub("", value)
 
 HEADER = ["TASKLIST", "TASK", "DESCRIPTION", "ASSIGN TO", "START DATE",
           "DUE DATE", "PRIORITY", "ESTIMATED TIME", "TAGS", "STATUS"]
@@ -229,8 +250,9 @@ class _Workbook:
         # Preserve insertion order: build inverse map first.
         ordered = sorted(self.strings.items(), key=lambda kv: kv[1])
         for s, _idx in ordered:
-            # Preserve whitespace and newlines.
-            items.append(f'<si><t xml:space="preserve">{escape(s)}</t></si>')
+            # Preserve whitespace and newlines; strip XML-illegal control
+            # bytes before escaping so the part stays wellformed.
+            items.append(f'<si><t xml:space="preserve">{escape(_xml_safe(s))}</t></si>')
         return (
             '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             f'<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
