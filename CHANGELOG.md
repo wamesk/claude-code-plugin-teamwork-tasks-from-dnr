@@ -4,6 +4,76 @@ All notable changes to the `teamwork-tasks-from-dnr` plugin are documented in
 this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-07-24
+
+### Added — contract-first flow
+
+Moves the API-contract definition **ahead** of implementation so backend and
+frontend tasks can run in parallel instead of the frontend waiting for a working
+API. Fully additive and opt-out (`--no-contract`); every existing behaviour is
+unchanged when no contract is generated.
+
+- **Repository detection** (`scripts/repo_detect.py`, new). Walks up to the git
+  root and classifies the repo as `backend` (Laravel `composer.json`),
+  `frontend` (Ionic `@ionic/vue` / `@ionic/core`) or `standalone` (no repo, or
+  neither). Monorepos prefer `backend` with a warning. The Laravel/module
+  detection helpers are copied from the `laravel-docs` plugin (the spec forbids
+  sharing code across the separate plugin repos). Exposed as
+  `teamwork_tasks.py --detect-repo`.
+- **Deterministic OpenAPI 3.1 emitter** (`scripts/contract_emit.py`, new). Claude
+  produces a *structured* `contracts[]` block; Python renders `openapi.yaml`
+  and `data-model.md` from it. Because the YAML is emitted deterministically
+  (stdlib-only block-style emitter with conservative quoting), the file is valid
+  OpenAPI 3.1 **even with `[DOPLNIŤ]` placeholders** — `[DOPLNIŤ]` only ever
+  lands inside quoted scalar strings, never in a structural position. Generated
+  contracts pass `redocly lint` with zero errors. Endpoints use the Sanctum
+  bearer scheme, reference a shared response envelope via relative `$ref` +
+  `allOf`, carry `x-wame-status: draft|stable`, and auto-declare path
+  parameters. Two error conventions are supported (`http_status` → real 4xx
+  responses; `ok` → HTTP 200 with `oneOf` success/error envelope).
+- **Shared response envelope** (`assets/wame-envelope.yaml`, new) with
+  `WameSuccess` / `WameError` schemas, copied once into
+  `docs/contracts/_shared/` and never overwritten.
+- **Idempotent contract writer** (`scripts/contract_writer.py`, new). Two-phase:
+  `--contract-plan` previews actions + `difflib` diffs without touching disk;
+  `--write-contract` writes. Existing contracts are never silently overwritten —
+  a sibling `*.proposed` file is written and a diff surfaced (unless `--force`).
+- **Contract predecessor task.** A "Definovať API kontrakt" task
+  (`task_kind: "contract"`) is added at the start of the earliest linked
+  tasklist, with its own MD estimate (`scripts/contract_estimate.py`,
+  `45 + 15·endpoints + 15·entities`, clamped 60–480, rounded to 15). Every BE
+  and FE task touching the contract lists it as a dependency; FE tasks depend on
+  the **contract task**, not on backend completion, and work against a
+  contract-derived mock.
+- **`### Kontrakt` block** appended to the technical description of every task
+  with a `contract_ref` (shared `scripts/contract_render.py`, used by both the
+  MD and XLSX renderers) — file path, version, repo, and a
+  `Commit: [DOPLNIŤ po zmergovaní]` line filled in manually after merge.
+- **`## Chýbajúce artefakty`** section added to the Markdown plan in
+  `standalone` mode, listing the contract(s) that must be generated in the
+  backend repo and the tasks waiting on them.
+- New prompt `prompts/extract_dnr_to_contract.md`; `prompts/extract_dnr_to_json.md`
+  gains a *§11a Contract-first fields* section (role, `contract_ref`, the
+  contract task, BE/FE differences).
+- New CLI modes on `scripts/teamwork_tasks.py`: `--detect-repo`,
+  `--contract-plan`, `--write-contract`, `--contract-estimate`, plus the
+  `--no-contract` opt-out.
+- 63 new pytest cases (repo detection, YAML emitter incl. a pyyaml round-trip,
+  idempotent writer, estimate, rendering, schema cross-validation).
+
+### Changed
+
+- `prompts/json_schema.json` gains optional `contracts[]`, per-task `task_kind`
+  / `role` / `contract_ref`, and metadata `repo_mode` / `repo_name` /
+  `error_http_convention` / `contract_desc_language` / `contract_dir`. All new
+  fields are optional, so pre-1.3.0 plans still validate unchanged.
+- `scripts/validate_json.py` cross-checks contract slugs (kebab-case),
+  `operation_id`s (ASCII, unique), HTTP methods, `contract_ref` integrity, and
+  that every generated contract has its "Definovať API kontrakt" task. These
+  checks only apply in backend mode (when `contracts[]` is present).
+- The plugin **never runs git** — committing the contract and filling each
+  task's `Commit:` line is left to the user.
+
 ## [1.2.1] - 2026-06-11
 
 ### Fixed
@@ -148,6 +218,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   section.
 - `TAGS` column intentionally left empty; `STATUS` defaults to `Active`.
 
+[1.3.0]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.3.0
 [1.2.1]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.2.1
 [1.2.0]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.2.0
 [1.1.0]: https://github.com/wame-sk/claude-code-plugin-teamwork-tasks-from-dnr/releases/tag/v1.1.0
