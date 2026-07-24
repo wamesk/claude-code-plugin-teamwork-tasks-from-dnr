@@ -205,6 +205,74 @@ Markdown-formatted detailed plan for the implementer:
 
 This is the developer's full execution recipe.
 
+### 11a. Contract-first fields (backend mode only)
+
+These fields only apply when the SKILL tells you the repo mode is `backend`
+(or `frontend`, for the reference side). Skip them entirely in `standalone`
+mode unless the SKILL says a contract is intended.
+
+#### `role`
+
+Set `"role"` on every task that carries a `[ROLE]` tag in its name (`BE`, `FE`,
+`QA`, `DevOps`, …). This drives the contract dependency wiring below. Tasks
+without a role tag get no `role`.
+
+#### `contract_ref` — link a task to its API contract
+
+Any task that **touches an API** (calls it, implements it, tests it) gets:
+
+```json
+"contract_ref": {"feature_slug": "<slug>", "version": "0.1.0"}
+```
+
+`feature_slug` must match one of the `contracts[]` you produced (backend) or the
+existing contract slug the SKILL found (frontend). Do **not** hand-write a
+`### Kontrakt` section in `technical_plan` — the renderer appends it
+automatically from `contract_ref` (file path, version, repo, and a
+`Commit: [DOPLNIŤ po zmergovaní]` line). Same idea as the auto-appended
+"Sumár akceptačných kritérií".
+
+#### The "Definovať API kontrakt" task
+
+For **each** contract, add one extra task at the **start** of the earliest
+linked tasklist (`section_ref` prefix `.0`, e.g. `4.1.0`):
+
+```json
+{
+  "name": "4.1.0 Definovať API kontrakt",
+  "task_kind": "contract",
+  "role": "BE",
+  "priority": "High",
+  "estimated_minutes": <see formula>,
+  "goal": "Zadefinovať a zmergnúť API kontrakt, na ktorý sa napoja BE aj FE úlohy.",
+  "acceptance_criteria": [
+    "Kontrakt openapi.yaml je zmergnutý v main BE repa.",
+    "V kontrakte sa už nenachádza žiadny endpoint s x-wame-status: draft ani žiadne [DOPLNIŤ]."
+  ],
+  "technical_plan": "Skontrolovať a doplniť vygenerovanú kostru docs/contracts/<slug>/openapi.yaml a data-model.md; doriešiť draft endpointy; zmergnúť do main.",
+  "contract_ref": {"feature_slug": "<slug>", "version": "0.1.0"}
+}
+```
+
+- **Estimate** = `45 + 15 × endpoints + 15 × entities`, rounded to 15 min,
+  clamped to `[60, 480]` (same methodology as every other task; the SKILL can
+  compute it for you via `--contract-estimate`). It is real work, not free
+  overhead.
+- Every BE **and** FE task that shares the same `feature_slug` lists this task
+  in its `dependencies` (by name) — the contract is their predecessor.
+
+#### BE vs FE tasks touching the contract
+
+- **BE task** (`role: "BE"`): add an acceptance criterion that **real responses
+  match the contract** (e.g. "Reálne odpovede endpointov zodpovedajú kontraktu
+  docs/contracts/<slug>/openapi.yaml."), and add to `technical_plan` a **proposal**
+  for a Pest contract test — which endpoint, which scenarios (happy path,
+  validation error, auth error). **Do not** generate the test file; describe it.
+- **FE task** (`role: "FE"`): its `dependencies` point at the **contract task**,
+  **not** at the BE implementation task. Add a note to `technical_plan` that
+  until the backend ships, work proceeds against a **mock derived from the
+  contract**.
+
 ### 12. Metadata
 
 ```json
@@ -218,6 +286,15 @@ This is the developer's full execution recipe.
   "generated_at": "<ISO-8601 timestamp>"
 }
 ```
+
+When the SKILL runs the contract-first flow it also gives you these values to
+copy verbatim into `metadata` (they steer the renderer, not the extraction):
+
+- `repo_mode` — `backend` / `frontend` / `standalone` (from repo detection).
+- `repo_name` — the BE repo name (goes into the `### Kontrakt` "Repo:" line).
+- `error_http_convention` — `ok` / `http_status` (user answer Q1).
+- `contract_desc_language` — `sk` / `en` / `cs` (user answer Q2).
+- `contract_dir` — usually `docs/contracts` (user answer Q3).
 
 ## Edge cases
 

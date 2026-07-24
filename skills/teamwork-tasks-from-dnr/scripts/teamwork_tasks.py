@@ -28,10 +28,15 @@ DEFAULT_CONFIG_TEMPLATE = PLUGIN_ROOT / "config.example.json"
 
 sys.path.insert(0, str(SCRIPT_DIR))
 
+import contract_estimate  # noqa: E402
+import contract_writer  # noqa: E402
 import dnr_to_text  # noqa: E402
 import json_to_md  # noqa: E402
 import json_to_xlsx  # noqa: E402
+import repo_detect  # noqa: E402
 import validate_json  # noqa: E402
+
+DEFAULT_CONTRACT_DIR = "docs/contracts"
 
 PLUGIN_SLUG = "teamwork-tasks-from-dnr-wamesk"
 DATA_ROOT = Path.home() / ".claude" / "plugins" / "data" / PLUGIN_SLUG
@@ -150,6 +155,52 @@ def _derive_basename(plan: dict, config: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Contract-first mode handlers
+# ---------------------------------------------------------------------------
+
+
+def cmd_detect_repo(args) -> dict:
+    start = Path(args.path).expanduser().resolve() if args.path else Path.cwd()
+    return repo_detect.detect_repo_mode(start)
+
+
+def _contract_dir(args, plan: dict) -> str:
+    if args.contract_dir:
+        return args.contract_dir
+    return (plan.get("metadata", {}) or {}).get("contract_dir") or DEFAULT_CONTRACT_DIR
+
+
+def _error_convention(args, plan: dict) -> str:
+    meta = (plan.get("metadata", {}) or {}).get("error_http_convention")
+    return meta or args.error_convention
+
+
+def cmd_contract_plan(args) -> dict:
+    """Preview the contract writes (actions + diffs), without touching disk."""
+    plan = json.loads(Path(args.json).read_text(encoding="utf-8"))
+    return contract_writer.plan_writes(
+        _contract_dir(args, plan), plan,
+        error_convention=_error_convention(args, plan))
+
+
+def cmd_write_contract(args) -> dict:
+    """Write the contract artifacts idempotently (`.proposed` when they exist)."""
+    plan = json.loads(Path(args.json).read_text(encoding="utf-8"))
+    return contract_writer.apply_writes(
+        _contract_dir(args, plan), plan, force=args.force,
+        error_convention=_error_convention(args, plan))
+
+
+def cmd_contract_estimate(args) -> dict:
+    return {
+        "endpoints": args.endpoints,
+        "entities": args.entities,
+        "estimated_minutes": contract_estimate.estimate_minutes(
+            args.endpoints, args.entities),
+    }
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -164,12 +215,37 @@ def main() -> int:
     sub.add_argument("--plan", action="store_true")
     sub.add_argument("--validate", action="store_true")
     sub.add_argument("--build", action="store_true")
+    sub.add_argument("--detect-repo", action="store_true",
+                     help="Classify the repo as backend/frontend/standalone")
+    sub.add_argument("--contract-plan", action="store_true",
+                     help="Preview contract writes + diffs (no filesystem change)")
+    sub.add_argument("--write-contract", action="store_true",
+                     help="Write contract artifacts idempotently")
+    sub.add_argument("--contract-estimate", action="store_true",
+                     help="MD estimate for the 'Definovať API kontrakt' task")
 
     parser.add_argument("--dnr", help="Path to DNR document (for --plan)")
-    parser.add_argument("--json", help="Path to plan JSON (for --validate / --build)")
+    parser.add_argument("--json", help="Path to plan JSON (for --validate / --build / contract)")
     parser.add_argument("--schema", help="Path to schema JSON (for --validate)")
     parser.add_argument("--output-dir", help="Output directory (for --build)")
     parser.add_argument("--basename", help="Output basename (for --build)")
+    parser.add_argument("--path", help="Directory to classify (for --detect-repo, default cwd)")
+    parser.add_argument("--contract-dir",
+                        help=f"Base dir for contracts (default {DEFAULT_CONTRACT_DIR})")
+    parser.add_argument("--error-convention", choices=["ok", "http_status"],
+                        default="http_status",
+                        help="How errors are returned in the contract (default http_status)")
+    parser.add_argument("--force", action="store_true",
+                        help="Overwrite an existing contract in place (for --write-contract)")
+    parser.add_argument("--endpoints", type=int, default=0,
+                        help="Endpoint count (for --contract-estimate)")
+    parser.add_argument("--entities", type=int, default=0,
+                        help="Entity count (for --contract-estimate)")
+    # SKILL-level flag; the orchestrator accepts it as a harmless no-op so a
+    # passthrough invocation never errors. Contract steps are skipped by the
+    # SKILL simply not calling the contract modes.
+    parser.add_argument("--no-contract", action="store_true",
+                        help="(SKILL-level) skip contract generation entirely")
 
     args = parser.parse_args()
 
@@ -187,6 +263,18 @@ def main() -> int:
         if not args.json:
             parser.error("--build requires --json <path>")
         result = cmd_build(args)
+    elif args.detect_repo:
+        result = cmd_detect_repo(args)
+    elif args.contract_plan:
+        if not args.json:
+            parser.error("--contract-plan requires --json <path>")
+        result = cmd_contract_plan(args)
+    elif args.write_contract:
+        if not args.json:
+            parser.error("--write-contract requires --json <path>")
+        result = cmd_write_contract(args)
+    elif args.contract_estimate:
+        result = cmd_contract_estimate(args)
     else:
         parser.print_help()
         return 2

@@ -10,7 +10,12 @@ to stay stdlib-only.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
+
+# Contract cross-validation constants.
+HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
+_KEBAB_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 class ValidationError(Exception):
@@ -125,6 +130,64 @@ def cross_validate(plan: dict) -> list[str]:
                 issues.append(
                     f"tasklists[{tl_idx}]/tasks[{t_idx}] '{task.get('name', '')}' — "
                     f"estimated_minutes ({minutes}) not divisible by 15")
+    issues.extend(_contract_issues(plan))
+    return issues
+
+
+def _contract_issues(plan: dict) -> list[str]:
+    """Cross-field checks for the contract-first fields (spec §6).
+
+    These only bite in backend mode (when `contracts` is present). Frontend /
+    standalone plans reference a contract via `contract_ref` without carrying a
+    `contracts[]` block, so the referential checks are skipped for them.
+    """
+    issues: list[str] = []
+    contracts = plan.get("contracts") or []
+    slugs = {c.get("feature_slug") for c in contracts if c.get("feature_slug")}
+
+    for c_idx, contract in enumerate(contracts):
+        slug = contract.get("feature_slug", "")
+        if slug and not _KEBAB_RE.match(slug):
+            issues.append(
+                f"contracts[{c_idx}] feature_slug '{slug}' is not kebab-case")
+        endpoints = (contract.get("openapi") or {}).get("endpoints") or []
+        seen_ops: set[str] = set()
+        for e_idx, endpoint in enumerate(endpoints):
+            method = (endpoint.get("method") or "").lower()
+            if method not in HTTP_METHODS:
+                issues.append(
+                    f"contracts[{c_idx}]/endpoints[{e_idx}] method "
+                    f"'{endpoint.get('method')}' is not a valid HTTP method")
+            op_id = endpoint.get("operation_id", "")
+            if op_id and not op_id.isascii():
+                issues.append(
+                    f"contracts[{c_idx}]/endpoints[{e_idx}] operation_id "
+                    f"'{op_id}' must be ASCII (English, goes into generated types)")
+            if op_id and op_id in seen_ops:
+                issues.append(
+                    f"contracts[{c_idx}] duplicate operation_id '{op_id}'")
+            seen_ops.add(op_id)
+
+    # Referential integrity between tasks and contracts (backend mode only).
+    contract_task_slugs: set[str] = set()
+    for tl in plan.get("tasklists", []):
+        for task in tl.get("tasks", []):
+            ref = task.get("contract_ref")
+            if ref:
+                fslug = ref.get("feature_slug")
+                if contracts and fslug not in slugs:
+                    issues.append(
+                        f"task '{task.get('name', '')}' references unknown "
+                        f"contract feature_slug '{fslug}'")
+                if task.get("task_kind") == "contract" and fslug:
+                    contract_task_slugs.add(fslug)
+
+    for slug in slugs:
+        if slug not in contract_task_slugs:
+            issues.append(
+                f"contract '{slug}' has no 'Definovať API kontrakt' task "
+                f"(task_kind='contract' with contract_ref.feature_slug='{slug}')")
+
     return issues
 
 

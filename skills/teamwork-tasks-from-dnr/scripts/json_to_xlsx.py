@@ -16,6 +16,7 @@ import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+import contract_render
 from description_summary import append_summary_to_description
 
 # Characters that are illegal in XML 1.0 documents. The XML 1.0 Char
@@ -79,7 +80,10 @@ def _build_rows(plan: dict, include_tags: bool, default_status: str) -> list[dic
     """
     rows = [{"kind": "header", "cells": list(HEADER)}]
 
-    language = (plan.get("metadata", {}).get("language") or "sk").lower()
+    metadata = plan.get("metadata", {})
+    language = (metadata.get("language") or "sk").lower()
+    repo_name = metadata.get("repo_name")
+    contract_dir = metadata.get("contract_dir") or contract_render.DEFAULT_CONTRACT_DIR
     for tl in plan.get("tasklists", []):
         tl_cells = [None] * 10
         tl_cells[0] = tl.get("name", "")
@@ -90,7 +94,7 @@ def _build_rows(plan: dict, include_tags: bool, default_status: str) -> list[dic
         for task in tl.get("tasks", []):
             cells = [None] * 10
             cells[1] = task.get("name", "")
-            cells[2] = _render_task_description(task)
+            cells[2] = _render_task_description(task, repo_name, language, contract_dir)
             if task.get("assign_to"):
                 cells[3] = str(task["assign_to"])
             cells[6] = task.get("priority", "")
@@ -103,7 +107,9 @@ def _build_rows(plan: dict, include_tags: bool, default_status: str) -> list[dic
     return rows
 
 
-def _render_task_description(task: dict) -> str:
+def _render_task_description(task: dict, repo_name: str | None = None,
+                             language: str = "sk",
+                             contract_dir: str = contract_render.DEFAULT_CONTRACT_DIR) -> str:
     """Compose the DESCRIPTION cell from acceptance + deps + goal + tech plan."""
     parts = ["## Akceptačné kritériá"]
     for crit in task.get("acceptance_criteria", []):
@@ -123,7 +129,9 @@ def _render_task_description(task: dict) -> str:
     parts.append(task.get("goal", "").strip())
     parts.append("")
     parts.append("## Technický popis")
-    parts.append(task.get("technical_plan", "").rstrip())
+    parts.append(contract_render.append_contract_ref(
+        task.get("technical_plan", ""), task.get("contract_ref"),
+        repo_name=repo_name, language=language, contract_dir=contract_dir))
 
     return "\n".join(parts)
 

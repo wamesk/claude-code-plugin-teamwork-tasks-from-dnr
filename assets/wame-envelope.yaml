@@ -1,0 +1,40 @@
+# WAME shared response envelope — referenced by every contract's openapi.yaml
+# via `$ref: ../_shared/wame-envelope.yaml#/components/schemas/...`.
+# This file is created once per project and is intentionally feature-agnostic.
+openapi: "3.1.0"
+info:
+  title: WAME shared response envelope
+  version: "0.1.0"
+paths: {}
+components:
+  schemas:
+    WameSuccess:
+      type: object
+      required: [type, code, data]
+      properties:
+        type:
+          type: string
+          const: success
+          description: Discriminator — always the literal "success".
+        code:
+          type: string
+          description: Machine code / translation key (e.g. order.synced).
+        data:
+          description: Endpoint-specific payload (concretised via allOf).
+    WameError:
+      type: object
+      required: [type, code, message]
+      properties:
+        type:
+          type: string
+          const: error
+          description: Discriminator — always the literal "error".
+        code:
+          type: string
+          description: Machine code / translation key (e.g. order.not_found).
+        message:
+          type: string
+          description: Human-readable error message.
+        exception:
+          type: [string, "null"]
+          description: Exception class / detail, null in production.

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import contract_render
 from description_summary import append_summary_to_description
 
 
@@ -60,6 +61,8 @@ def render(plan: dict) -> str:
     lines.append("")
 
     language = (md.get("language") or "sk").lower()
+    repo_name = md.get("repo_name")
+    contract_dir = md.get("contract_dir") or contract_render.DEFAULT_CONTRACT_DIR
     for i, tl in enumerate(plan.get("tasklists", []), start=1):
         lines.append("---")
         lines.append("")
@@ -101,7 +104,9 @@ def render(plan: dict) -> str:
             lines.append((task.get("goal") or "").strip())
             lines.append("")
             lines.append("## Technický popis")
-            lines.append((task.get("technical_plan") or "").rstrip())
+            lines.append(contract_render.append_contract_ref(
+                task.get("technical_plan"), task.get("contract_ref"),
+                repo_name=repo_name, language=language, contract_dir=contract_dir))
             lines.append("")
 
     warnings = plan.get("warnings") or []
@@ -113,6 +118,17 @@ def render(plan: dict) -> str:
         for w in warnings:
             lines.append(f"- {w}")
         lines.append("")
+
+    # Standalone mode: the contract could not be generated here — list the
+    # artifacts that still need to be produced in the backend repo.
+    if md.get("repo_mode") == "standalone":
+        missing = contract_render.render_missing_artifacts(
+            plan, language=language, contract_dir=contract_dir)
+        if missing:
+            lines.append("---")
+            lines.append("")
+            lines.append(missing)
+            lines.append("")
 
     return "\n".join(lines)
 
