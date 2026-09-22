@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
-"""Build a Teamwork.com tasks import XLSX from the DNR task definitions.
+"""ARCHIVED v1 build script — kept for reference only, not run by the test suite.
+
+DO NOT COPY ITS TASKLIST DESCRIPTIONS. The `DNR_EXTENSION_*` heredocs below end
+with an `== N Odhad pracnosti ==` block carrying the man-days (lines 77, 115 and
+169). Writing the estimate into a description is no longer allowed: the estimate
+lives in the ESTIMATED TIME column / the Teamwork estimate field and nowhere else.
+
+Build a Teamwork.com tasks import XLSX from the DNR task definitions.
 
 Layout per user request:
-- Tasklist description: full DNR passages relevant to the extension.
+- Tasklist description: full DNR passages relevant to the extension (excluding
+  the "Odhad pracnosti" sub-section).
 - Task name: business-friendly (understandable to client).
 - Task description: Acceptance criteria first, then '---', then technical plan.
 - Tags column left empty.

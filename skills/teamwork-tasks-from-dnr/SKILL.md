@@ -128,6 +128,64 @@ Store the answers in `metadata` (`error_http_convention`,
 `contract_desc_language`, `contract_dir`). Pass `error_http_convention` to
 `--contract-plan` / `--write-contract` as `--error-convention`.
 
+## Task record rules
+
+> Block version `wame-task-record-v1`. Shared **verbatim** across the plugins that write a Teamwork
+> task — `teamwork-task-analyze`, `teamwork-tasks-from-desk`, `teamwork-tasks-from-session` and
+> `teamwork-tasks-from-dnr`. Change it in all of them or in none.
+
+### The estimate lives in the estimate field, and nowhere else
+
+Never write minutes or hours into a task's **title** or **description**. Not in the preamble, not
+inside the technical plan, not as a footer line under it.
+
+The reason is maintenance, not taste. An estimate gets revised — after the first hour of work, after
+a clarifying answer comes back, after the task is split into subtasks. A number that also sits in
+prose has to be found and changed in every copy it was written to, and the copy somebody misses is
+the one the next reader believes. One field, one number, nothing to reconcile.
+
+This binds every surface that writes a task:
+
+- the description body, including any `**Odhad:** … min` or `**Estimate:** … min` line
+- the task title, including a `(120 min)` or `· 2h` suffix
+- the description column of a generated import file
+- a subtask's title and description, on the same terms as the parent
+
+Where the estimate belongs instead: the API estimate field — `estimateMinutes` on a v3 read,
+`estimatedMinutes` on a v3 create, `estimated-minutes` on the classic v1 update.
+
+Where it is still fine to show: the terminal preview, the confirmation gate, the final report, and
+any companion document that is not the task itself — a Desk internal note, a Markdown plan sitting
+next to an XLSX. Those are read once and thrown away. The task record is not.
+
+### Never lose what the reporter wrote
+
+When this skill rewrites an **existing** task description, everything already there survives
+**verbatim** at the top, above the first `---`.
+
+- **Inline images.** A screenshot pasted into a Teamwork description is ordinary Markdown:
+  `![image.png](https://tw-inlineimages.s3-accelerate.amazonaws.com/…)`. It is **not** a separate
+  attachment, and Teamwork shows it **nowhere else** — `GET /projects/api/v3/tasks/{id}/files.json`
+  returns nothing for it. Dropping that link deletes the screenshot from the task. This is not
+  hypothetical: one run stripped the image links out of 18 descriptions on the assumption that
+  Teamwork rendered them separately, and destroyed 25 screenshots. They came back only because the
+  original text happened to still be in a scratch file.
+- **The reporter's own wording, spelling and punctuation.** Do not add diacritics, do not fix
+  grammar, do not translate, do not tighten, do not re-order. A bug report is the record of what
+  somebody saw and how they described it. A tidied version is no longer that record, and the tester
+  cannot recognise their own report in it.
+- **Links, lists, line breaks, and any HTML that is already there.** Pass the block through
+  untouched.
+
+Before writing, read the current description. After composing the new one, check that the old text
+still occurs inside it character for character. When it does not, you are about to delete somebody's
+work — stop and ask the user instead of writing.
+
+Attachments and comments are separate records and this skill never touches them. If a change would
+need one removed, that is a question for the user, not a step in the plan.
+
+---
+
 ## WAME estimate methodology
 
 > Block version `wame-estimate-v2`. Shared **verbatim** across the plugins
@@ -241,7 +299,9 @@ You (Claude) now perform the extraction:
 1. Read `plain_text` from Step 5.
 2. Apply the rules from `extract_dnr_to_json.md`:
    - Each extension section → one tasklist.
-   - Tasklist description = verbatim DNR text from that section.
+   - Tasklist description = verbatim DNR text from that section, minus the
+     "Odhad pracnosti" sub-section — the estimate belongs only in `md_estimate`
+     and in the ESTIMATED TIME column, never in a description.
    - 6-12 business-friendly tasks per tasklist.
    - Each task: `name`, `priority`, `estimated_minutes`, `goal`, `acceptance_criteria[]`, optional `dependencies[]`, `technical_plan`.
    - Sum of `estimated_minutes` per tasklist must match DNR "Odhad pracnosti" (1 MD = 480 min).

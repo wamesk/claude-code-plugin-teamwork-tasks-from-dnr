@@ -48,8 +48,14 @@ The full verbatim DNR text from that extension section, including:
 - Business purpose (Biznisový účel)
 - Decisions table (Zásadné rozhodnutia)
 - Use case scenarios (Scenáre použitia)
-- Effort estimate (Odhad pracnosti)
 - Any side-note boxes (Edge-case, Dospresnenie, …)
+
+**Never copy the "Odhad pracnosti" sub-section into the description.** It is the
+only part of the section that is a number the team revises. The man-days go into
+`md_estimate` and the minutes into each task's `estimated_minutes`, which Teamwork
+imports as the ESTIMATED TIME field — that field is the single home of the
+estimate. A number repeated in prose stops matching the field the first time
+anyone re-scopes the work, and nobody notices because both look authoritative.
 
 Format as plain text with light structure:
 ```
@@ -325,3 +331,6 @@ Before returning, verify:
 - [ ] Each tasklist `name` starts with `<section_ref> ` (e.g. `4.1 `).
 - [ ] Each task `name` starts with `<section_ref>.<index> ` (e.g. `4.1.1 `).
 - [ ] Description sub-headings use `** … **` bold markers, not `==`.
+- [ ] No tasklist `description` contains the "Odhad pracnosti" sub-section, a MD
+      figure or a minute figure — the estimate lives only in `md_estimate` and
+      `estimated_minutes`.

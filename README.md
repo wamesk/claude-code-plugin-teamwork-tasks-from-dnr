@@ -156,7 +156,11 @@ python3 -m pytest tests/ -v
 - [ ] Phase 3 — Generovanie TypeScript typov / Axios klienta z kontraktu na FE
 - [ ] Phase 3 — Generovanie Pest contract testov (dnes len návrh v popise BE tasku)
 - [ ] Phase 2 — Teamwork API integration (cez Teamwork MCP server: `twprojects-create_tasklist`, `twprojects-create_task`)
-- [ ] Phase 2 — `--update-existing` diff režim pre DNR v1.X → v1.Y
+- [ ] Phase 2 — `--update-existing` diff režim pre DNR v1.X → v1.Y — **pri
+      prepise existujúceho tasku musí pôvodný popis prežiť doslovne, vrátane
+      inline obrázkov (`![image.png](https://tw-inlineimages.s3-accelerate.amazonaws.com/...)`),
+      HTML `<img>` tagov a odkazov na prílohy.** Screenshot vložený do popisu
+      nie je príloha a nikde inde sa nenachádza — zahodenie odkazu ho zmaže.
 - [ ] Phase 2 — Git hook pre auto-aktualizáciu plánu pri zmene DNR
 
 ## Licencia

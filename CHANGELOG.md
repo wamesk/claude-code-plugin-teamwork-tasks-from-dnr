@@ -4,6 +4,43 @@ All notable changes to the `teamwork-tasks-from-dnr` plugin are documented in
 this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] — 2026-09-22
+
+### Fixed
+- **The generated tasklist description carried the estimate.** The extraction prompt
+  told the model to copy the DNR's "Odhad pracnosti" sub-section into
+  `tasklists[].description`, and `json_to_xlsx._build_rows` writes that straight into the
+  DESCRIPTION column of the Teamwork import file. The same man-days were already the
+  `md_estimate` field that `validate_json.cross_validate` gates against, so the number
+  shipped twice and could disagree with itself. Removed from the prompt, from the Step 6
+  summary the model acts on, and from the `## Final check` list it re-reads before
+  returning.
+- The three gold fixtures encoded the wrong shape and would have pulled the
+  implementation back to it: `tests/fixtures/expected_tasks.json` (three tasklist
+  descriptions), `tests/fixtures/Strecnianska_v1.2_gold_TeamworkTasks.md` (three
+  blockquotes) and the binary `Strecnianska_v1.2_gold_TeamworkTasks.xlsx`, regenerated
+  from the corrected JSON. `tests/legacy/build_tw_xlsx_v1.py` is an uncollected archive
+  and carries a banner instead.
+- Suite green after the change: 94 passed, 3 skipped.
+
+### Changed
+- **Two new rules, shared verbatim as the `wame-task-record-v1` block.**
+  1. *The estimate lives in the estimate field, and nowhere else.* Minutes never go
+     into a task title or description — not in the preamble, not in the technical
+     plan, not as a footer line. An estimate gets revised, and a number duplicated
+     into prose has to be changed in every copy; the copy somebody misses is the one
+     the next reader believes. Previews, confirmation gates, final reports and
+     companion documents may still show it — those are read once and thrown away.
+  2. *Never lose what the reporter wrote.* When an existing description is rewritten,
+     everything already there survives verbatim at the top: inline images, links, the
+     reporter's own wording, spelling and punctuation. No diacritics added, no grammar
+     fixed, no translation, no tidying.
+- The task DESCRIPTION cell built by `json_to_xlsx._render_task_description` never
+  carried the estimate and still does not; the number goes to the ESTIMATED TIME column
+  alone. The companion Markdown plan from `json_to_md.py` keeps its `**Odhad:**` meta
+  line — a document read once beside the XLSX is not a task record, and the rule says so
+  explicitly.
+
 ## [1.4.0] — 2026-09-22
 
 ### Changed

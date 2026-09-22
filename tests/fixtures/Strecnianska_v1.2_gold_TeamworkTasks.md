@@ -80,9 +80,6 @@ Sprievodný súbor `*_TeamworkTasks.xlsx` v tom istom adresári je 1:1 import-re
 > 15. Nájomca a družstvo sa dohodnú na predčasnom ukončení (napr. k 30. 7.). Admin zmení dátum konca zmluvy.
 > 16. Pôvodný ročný zálohový predpis zostáva nedotknutý; nájomca doplatí splátky podľa pôvodného plánu až do skutočného konca prenájmu.
 > 17. Pri ročnom zúčtovaní systém započíta iba reálne odbehnuté mesiace zmluvy. Prípadný preplatok/nedoplatok sa vyrieši cez štandardný proces ročného zúčtovania na konci roka — nie počas roka.
->
-> ** 4.1.4 Odhad pracnosti **
-> Ročný zálohový predpis: 2,5 MD (logika prípravy predpisu, formát PDF podľa vzoru SOMPET, hromadná akcia, alikvótny výpočet).
 
 ### Task 1.1 — 4.1.1 Príprava systémových štruktúr pre ročný zálohový predpis
 
@@ -511,9 +508,6 @@ Pest feature/unit testy pre `AnnualAdvanceBuilder`, Nova akcie a PDF generátor.
 >
 > ** Edge-case — platba s historickým VS **
 > Môže nastať situácia, kedy príde platba s variabilným symbolom, ktorý existoval v minulosti, no zmluva už nie je aktívna (napr. odsťahovaný nájomca). Takáto platba zostane v stave „Nespárovaná" a vyžaduje manuálne rozhodnutie admina. Bez ďalšej automatizácie.
->
-> ** 4.2.5 Odhad pracnosti **
-> Automatické párovanie platieb: 1,5 MD (čítanie e-mailov, rozpoznanie obsahu, priraďovacia logika, prehľady pre admina).
 
 ### Task 2.1 — 4.2.1 Evidencia notifikácií z banky v systéme
 
@@ -957,9 +951,6 @@ Pest feature testy pre kompletný flow `bmail:import` → `TatraBankaParser` →
 > 34. Zvolí „Pripraviť a odoslať PDF hromadne" — pre každú zmluvu vznikne individuálny PDF dokument a odošle sa e-mailom.
 > 35. Ak sa po vygenerovaní zistí chyba u konkrétneho nájomcu, admin ručne upraví jeho hodnoty a vygeneruje len jeho opravené PDF; ostatné zúčtovania sa neprepočítavajú. (v1.2)
 > 36. Klient (družstvo) prípadné preplatky/nedoplatky vyrovná mimo systém.
->
-> ** 4.3.5 Odhad pracnosti **
-> Ročné zúčtovanie služieb: 2 MD (kalkulačná logika, sumárny prehľad, formát PDF, hromadné pripravenie a odosielanie).
 
 ### Task 3.1 — 4.3.1 Evidencia ročného zúčtovania služieb v systéme
 
