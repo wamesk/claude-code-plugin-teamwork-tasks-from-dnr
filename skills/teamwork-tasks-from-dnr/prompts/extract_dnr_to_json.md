@@ -146,12 +146,17 @@ Apply config hints (`priorities.high_keywords`, etc.) if provided.
 - Distribute proportionally to complexity (e.g. a calculator service ≈ 5h, a
   migration ≈ 1-2h, tests ≈ 1-3h).
 - **Apply the WAME estimate methodology defined in `SKILL.md` (the
-  `## WAME estimate methodology` H2 block):** estimates are produced by a
-  senior engineer using Claude Code, so they are 30–50% lower than a raw
-  hand-written estimate, then padded with a 15–30% buffer for risk. Use the
-  calibration anchors in SKILL.md as a sanity check. If your distribution
-  conflicts with those anchors, prefer the methodology and flag the
-  conflicting DNR clause in the warning field — do not silently inflate.
+  `## WAME estimate methodology` H2 block):** each task gets one number picked
+  against the anchors there. There is no speedup factor and no risk buffer —
+  version 2 of the methodology removed both.
+- **The tasklist sum wins over the methodology.** `md_estimate × 480` is
+  enforced by `scripts/validate_json.py` and a plan that misses it is rejected,
+  so the methodology decides how the budget is *split*, not how big it is. Fit
+  the sum, then describe the compromise in `warnings`: name the tasks you had to
+  compress or stretch and by how much. Do not quietly reshape the plan until the
+  arithmetic works — that deletes the only signal that the DNR figure is wrong.
+- Never inflate one task to absorb leftover budget and never cut one below its
+  anchor to make room; spread the difference across several tasks instead.
 
 ### 8. Task `goal`
 

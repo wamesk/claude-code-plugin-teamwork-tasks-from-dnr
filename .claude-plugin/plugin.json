@@ -1,6 +1,6 @@
 {
   "name": "teamwork-tasks-from-dnr",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Generate Teamwork.com import-ready task plan (XLSX + Markdown) from a 'Detailný návrh riešenia' (DNR) document. LLM-powered extraction of tasklists, business-friendly task names, acceptance criteria, and technical plans. Multi-language (sk/en/cs). Since 1.3.0 a contract-first flow detects the repo (backend/frontend/standalone) and, in a Laravel backend repo, generates an OpenAPI 3.1 contract skeleton + data-model from the DNR under docs/contracts/<feature>/, adds a 'Definovať API kontrakt' predecessor task, and links every API task to the contract so backend and frontend can run in parallel.",
   "author": {
     "name": "Stanislav Červeňák",

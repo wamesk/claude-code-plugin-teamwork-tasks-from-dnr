@@ -4,6 +4,52 @@ All notable changes to the `teamwork-tasks-from-dnr` plugin are documented in
 this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] — 2026-09-22
+
+### Changed
+- **Estimate methodology replaced — `wame-estimate-v2`.** The old rule produced a
+  "traditional" estimate, cut it by 30–50 % for Claude Code, then added a 15–30 %
+  buffer on top. Two percentages stacked on a guess give a 0.58×–0.91× band on
+  every task, so the same work could legitimately be quoted at 60 or at 95
+  minutes and the wider end always won the argument. The methodology now
+  estimates **one number directly** against a table of finished-outcome anchors.
+  The anchors are tighter (a single figure each, adjust by at most one 15-minute
+  step) and the block states explicitly what the number covers — reproduce,
+  implement, test, run the suite, self-review, one review round — and what it
+  never covers: deployment, production data fixes, client communication, and any
+  work behind an unanswered `[OTVORENÉ]` question.
+- **Uncertainty is now an open question, not a surcharge.** Where the old text
+  told you to pad for "unknown unknowns", the new one tells you to write the
+  question into the task, estimate the investigation that answers it, and state
+  what the fix costs under each answer.
+- **The 240-minute split threshold is now named as the working ceiling**, so it
+  no longer contradicts the 480-minute hard cap sitting in the same paragraph.
+- The methodology block is byte-identical across `teamwork-task-analyze`,
+  `teamwork-tasks-from-dnr`, `teamwork-tasks-from-desk`,
+  `teamwork-tasks-from-session` and `dnr-business`, and now carries a version
+  marker so a drifted copy is visible.
+
+### Fixed
+- **Two estimate rules contradicted each other and the losing one was never
+  marked as losing.** `SKILL.md` told the model to apply the methodology, while
+  `scripts/validate_json.py` hard-fails any plan whose tasklist minutes drift
+  more than 5 % or 60 minutes from `md_estimate × 480`. The gate always won, so
+  the methodology could not move a single total and the extraction prompt's
+  "prefer the methodology" instruction was impossible to obey. A new
+  *Which rule wins* section states the precedence: the man-days in the DNR are a
+  number the client has already seen, so the **sum is a commitment** and the
+  methodology governs the **distribution** inside it. When the two disagree, fit
+  the budget and write the delta into `warnings` by name — never reshape tasks
+  silently until the arithmetic works, because that deletes the only signal that
+  the DNR figure needs reopening.
+- `scripts/contract_estimate.py` no longer describes its own constants as a
+  figure that "bakes in the speed-up and the risk buffer". The three constants
+  are the estimate.
+
+### Removed
+- References to the 30–50 % speedup and the 15–30 % risk buffer in
+  `prompts/extract_dnr_to_json.md`.
+
 ## [1.3.0] — 2026-07-24
 
 ### Added — contract-first flow

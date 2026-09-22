@@ -11,9 +11,10 @@ estimate is derived from the number of endpoints and entities:
     minutes = 45 (base)  +  15 per endpoint  +  15 per entity
 
 The result is always a multiple of 15 and is clamped to the same [60, 480]
-window every other task in this skill uses (the WAME senior-engineer +
-Claude Code methodology already bakes in the speed-up and the risk buffer — see
-the `## WAME estimate methodology` block in SKILL.md).
+window every other task in this skill uses. The three constants below ARE the
+estimate — they are not a raw figure waiting for a speedup or a buffer to be
+applied on top. See the `## WAME estimate methodology` block in SKILL.md
+(`wame-estimate-v2`), which estimates one number directly.
 
 Stdlib only.
 """
