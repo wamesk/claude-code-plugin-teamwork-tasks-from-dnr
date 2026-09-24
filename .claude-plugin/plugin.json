@@ -1,7 +1,7 @@
 {
   "name": "teamwork-tasks-from-dnr",
-  "version": "1.5.0",
-  "description": "Generate Teamwork.com import-ready task plan (XLSX + Markdown) from a 'Detailný návrh riešenia' (DNR) document. LLM-powered extraction of tasklists, business-friendly task names, acceptance criteria, and technical plans. Multi-language (sk/en/cs). Since 1.3.0 a contract-first flow detects the repo (backend/frontend/standalone) and, in a Laravel backend repo, generates an OpenAPI 3.1 contract skeleton + data-model from the DNR under docs/contracts/<feature>/, adds a 'Definovať API kontrakt' predecessor task, and links every API task to the contract so backend and frontend can run in parallel.",
+  "version": "1.6.0",
+  "description": "Generate Teamwork.com import-ready task plan (XLSX + Markdown) from a 'Detailný návrh riešenia' (DNR) document. LLM-powered extraction of tasklists, business-friendly task names, acceptance criteria, and technical plans. Multi-language (sk/en/cs). Since 1.3.0 a contract-first flow detects the repo (backend/frontend/standalone) and, in a Laravel backend repo, generates an OpenAPI 3.1 contract skeleton + data-model from the DNR under docs/contracts/<feature>/, adds a 'Definovať API kontrakt' predecessor task, and links every API task to the contract so backend and frontend can run in parallel. Since 1.6.0 tasks that add a screen carry cross-cutting acceptance criteria — reachability (menu entry + links from the parent screen, enforced by the validator) plus the applicable security, performance and UI/UX items, keyed like teamwork-task-test's QA dimensions; every code task's technical plan also names the installed framework versions (detected from the repo's lock files) and asks for their current idioms — plan only, never an acceptance criterion.",
   "author": {
     "name": "Stanislav Červeňák",
     "email": "info@wame.sk"

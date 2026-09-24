@@ -9,7 +9,8 @@ Z DNR dokumentu (`.docx`, `.pdf`, `.md`):
 1. Claude rozpozná štruktúru dokumentu (rozšírenia, sekcie, scenáre).
 2. Vygeneruje pre každé rozšírenie **task list** a 6–12 detailných **taskov** s:
    - **business-friendly názvom** (zrozumiteľný aj pre PM/klienta),
-   - **akceptačnými kritériami** ako `- [ ]` checkbox listom,
+   - **akceptačnými kritériami** ako `- [ ]` checkbox listom (od v1.6.0 aj s pod-sekciou
+     `### Prierezové požiadavky` — dostupnosť z menu a preklikmi, bezpečnosť, výkon, UI/UX),
    - **cieľom** (1–3 vety pre rýchle pochopenie pri implementácii),
    - **technickým popisom** (cesty súborov, kód-snippety, edge cases),
    - **odhadom v minútach** zhodným s "Odhad pracnosti" z DNR.
@@ -107,6 +108,30 @@ Na začiatku behu sa skill spýta 3 otázky (chybový HTTP status, jazyk
 `description`, cesta ku kontraktu). Celé to vypneš cez `--no-contract`
 (správanie ako pred v1.3.0). Plugin **negeneruje commity ani nepushuje** —
 zmergovanie kontraktu a doplnenie `Commit:` riadku je na tebe.
+
+## Prierezové požiadavky (od v1.6.0)
+
+DNR hovorí, čo má funkcia robiť, no málokedy povie, či sa nová obrazovka dá
+*nájsť*. Tasky, ktoré pridávajú obrazovku, sekciu administrácie alebo modul s UI,
+sú preto v JSON pláne označené `ui_surface: "new_screen"` a musia mať kritérium
+`reachability`: položku v menu a preklik z nadradenej obrazovky, prípadne
+výslovné vyhlásenie „zámerne len cez URL". `validate_json.py` plán zamietne, ak
+nová obrazovka takéto kritérium nemá. Kritériá `security`, `performance` a
+`ui_ux` pribudnú tam, kde sa týkajú. Kľúče zodpovedajú štyrom dimenziám, ktoré
+`teamwork-task-test` kontroluje pri QA.
+
+Renderery ich vkladajú do sekcie akceptačných kritérií pred prvé `---`, aby ich
+`teamwork-task-test` vedel odškrtnúť. Nadpis sa riadi jazykom dokumentu:
+`### Prierezové požiadavky` (sk), `### Průřezové požadavky` (cs),
+`### Cross-cutting requirements` (en). Každý riadok má tvar
+`- [ ] **Dostupnosť (reachability):** …`. Plán bez týchto polí sa vyrenderuje
+presne ako doteraz. Odhad sa do kritéria nikdy nedostane.
+
+Technický popis každého tasku, ktorý píše alebo mení kód, navyše končí riadkom
+`**Framework:**`. Ten hovorí, že treba rešpektovať verzie frameworkov
+nainštalované v repozitári a ich aktuálne idiómy. Verzie deteguje
+`--detect-repo` z `composer.lock`, `package.json` a spol.; mimo repozitára ide o
+všeobecný riadok. Patrí len do plánu, nikdy nie je akceptačným kritériom.
 
 ## Konfigurácia
 

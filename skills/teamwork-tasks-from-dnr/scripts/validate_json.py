@@ -13,6 +13,8 @@ import json
 import re
 from pathlib import Path
 
+import cross_cutting
+
 # Contract cross-validation constants.
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
 _KEBAB_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -131,6 +133,8 @@ def cross_validate(plan: dict) -> list[str]:
                     f"tasklists[{tl_idx}]/tasks[{t_idx}] '{task.get('name', '')}' — "
                     f"estimated_minutes ({minutes}) not divisible by 15")
     issues.extend(_contract_issues(plan))
+    # A task that adds a new screen must say how a user reaches it.
+    issues.extend(cross_cutting.issues(plan))
     return issues
 
 

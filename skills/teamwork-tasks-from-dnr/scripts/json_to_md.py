@@ -15,6 +15,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import contract_render
+import cross_cutting
 from description_summary import append_summary_to_description
 
 
@@ -43,6 +44,11 @@ def render(plan: dict) -> str:
     lines.append("- **Cieľ** je 1–3 vety pre rýchle pochopenie účelu tasku (Plan-mode friendly).")
     lines.append("- **Technický popis** obsahuje cesty súborov, snippety, edge cases.")
     lines.append("- **Závislosť** (ak je) je samostatná pod-sekcia v akceptačných kritériách.")
+    if cross_cutting.has_cross_cutting(plan):
+        # Only when the plan uses the field, so older plans render unchanged.
+        lines.append("- **Prierezové požiadavky** (ak sú) sú pod-sekcia akceptačných kritérií — "
+                     "dostupnosť z menu a preklikmi, bezpečnosť, výkon, UI/UX; kľúče v zátvorke "
+                     "zodpovedajú kontrolám `teamwork-task-test`.")
     lines.append("")
 
     lines.append("## Mapovanie pracnosti")
@@ -89,6 +95,13 @@ def render(plan: dict) -> str:
             lines.append("## Akceptačné kritériá")
             for crit in task.get("acceptance_criteria", []):
                 lines.append(f"- [ ] {crit}")
+
+            # Cross-cutting items stay inside the acceptance section (before
+            # the first `---`) so teamwork-task-test can tick them.
+            block = cross_cutting.render_block(task.get("cross_cutting"), language)
+            if block:
+                lines.append("")
+                lines.extend(block.split("\n"))
 
             deps = task.get("dependencies") or []
             if deps:

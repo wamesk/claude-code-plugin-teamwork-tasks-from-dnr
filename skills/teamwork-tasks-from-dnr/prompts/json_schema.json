@@ -66,6 +66,22 @@
                   "type": "string",
                   "description": "Engineering role the task belongs to (BE, FE, QA, DevOps, …). Drives contract dependency wiring."
                 },
+                "ui_surface": {
+                  "enum": ["new_screen", "existing_screen"],
+                  "description": "Set when the task has a user interface: 'new_screen' = adds a screen / admin section / page / module with UI (requires a 'reachability' item in cross_cutting); 'existing_screen' = changes an existing screen. Omit for tasks without UI."
+                },
+                "cross_cutting": {
+                  "type": "array",
+                  "description": "Cross-cutting requirements rendered as a sub-block of the acceptance criteria. Keys match teamwork-task-test's review dimensions; its advisory 'framework' dimension is deliberately not allowed here — it belongs in technical_plan only.",
+                  "items": {
+                    "type": "object",
+                    "required": ["dimension", "criterion"],
+                    "properties": {
+                      "dimension": {"enum": ["ui_ux", "performance", "security", "reachability"]},
+                      "criterion": {"type": "string", "minLength": 1}
+                    }
+                  }
+                },
                 "contract_ref": {
                   "type": "object",
                   "required": ["feature_slug"],

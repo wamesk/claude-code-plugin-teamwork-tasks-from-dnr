@@ -17,6 +17,7 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 import contract_render
+import cross_cutting
 from description_summary import append_summary_to_description
 
 # Characters that are illegal in XML 1.0 documents. The XML 1.0 Char
@@ -114,6 +115,13 @@ def _render_task_description(task: dict, repo_name: str | None = None,
     parts = ["## Akceptačné kritériá"]
     for crit in task.get("acceptance_criteria", []):
         parts.append(f"- [ ] {crit}")
+
+    # Same placement as json_to_md: inside the acceptance section, before
+    # `### Závislosť` and the first `---`. No-op without `cross_cutting`.
+    block = cross_cutting.render_block(task.get("cross_cutting"), language)
+    if block:
+        parts.append("")
+        parts.append(block)
 
     deps = task.get("dependencies") or []
     if deps:

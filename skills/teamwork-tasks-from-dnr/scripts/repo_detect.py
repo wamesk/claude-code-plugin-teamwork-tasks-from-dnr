@@ -8,6 +8,10 @@ inside a *backend* repository; a *frontend* repository merely references an
 existing contract, and *standalone* runs (e.g. Claude.ai without a repo) skip
 contract generation entirely.
 
+It also reports the framework / language versions installed in the repo
+(`detect_versions`), so the technical plan of every generated task can tell the
+implementer to respect those versions and their current idioms.
+
 Detection rules (spec §4), checked from the git root walking up from `cwd`:
     - composer.json contains `laravel/framework`            -> backend
     - package.json contains `@ionic/vue` or `@ionic/core`   -> frontend
@@ -61,7 +65,9 @@ def _load_json(path: Path) -> dict | None:
         return None
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+    except (ValueError, OSError):
+        # ValueError covers JSONDecodeError and UnicodeDecodeError (a lock
+        # file with stray bytes must not crash --detect-repo).
         return None
 
 
@@ -188,6 +194,167 @@ def detect_modules(root: Path) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Installed framework versions (context for the technical plan)
+# ---------------------------------------------------------------------------
+
+# Composer packages whose installed version shapes which idioms a task may use.
+_COMPOSER_PACKAGES = (
+    ("laravel/framework", "Laravel"),
+    ("laravel/nova", "Nova"),
+    ("livewire/livewire", "Livewire"),
+    ("inertiajs/inertia-laravel", "Inertia (Laravel)"),
+    ("pestphp/pest", "Pest"),
+)
+
+# npm packages, same purpose. The installed version from package-lock.json
+# wins; otherwise the range declared in package.json.
+_NPM_PACKAGES = (
+    ("vue", "Vue"),
+    ("nuxt", "Nuxt"),
+    ("react", "React"),
+    ("@ionic/vue", "Ionic Vue"),
+    ("@inertiajs/vue3", "Inertia (Vue 3)"),
+    ("tailwindcss", "Tailwind CSS"),
+    ("vite", "Vite"),
+    ("typescript", "TypeScript"),
+)
+
+
+def _strip_v(version) -> str:
+    """`v12.28.1` → `12.28.1` (Composer tags often carry a `v` prefix)."""
+    version = str(version or "").strip()
+    if version[:1] in ("v", "V") and version[1:2].isdigit():
+        return version[1:]
+    return version
+
+
+def detect_versions(root: Path) -> dict:
+    """Read the framework / language versions the repository actually uses.
+
+    The technical plan of a generated task tells the implementer to respect
+    the *installed* versions and their current idioms, so the versions come
+    from the manifest and lock files — never from anyone's memory. Sources,
+    all optional:
+
+        composer.json    `config.platform.php`, else `require.php`  -> "php"
+        composer.lock    installed version of `_COMPOSER_PACKAGES`
+        package-lock     installed version of `_NPM_PACKAGES`
+                         (lockfileVersion 2/3 `packages`, v1 `dependencies`)
+        package.json     declared range when there is no lock entry,
+                         `engines.node`, `browserslist`
+        .nvmrc           Node version (wins over `engines.node`)
+        .browserslistrc  browser targets (win over `browserslist`)
+
+    Returns an ordered dict `{package: version}`; empty when nothing is found.
+    A missing or malformed file is skipped — this is plan context, not a gate,
+    and the plan then falls back to the generic framework line.
+    """
+    root = Path(root)
+    versions: dict[str, str] = {}
+
+    composer = _obj(_load_json(root / "composer.json"))
+    platform = _obj(_obj(composer.get("config")).get("platform"))
+    php = platform.get("php") or _obj(composer.get("require")).get("php")
+    if php:
+        versions["php"] = str(php)
+
+    lock = _obj(_load_json(root / "composer.lock"))
+    installed: dict[str, str] = {}
+    for key in ("packages", "packages-dev"):
+        pkgs = lock.get(key)
+        for pkg in pkgs if isinstance(pkgs, list) else []:
+            if isinstance(pkg, dict) and pkg.get("name") and pkg.get("version"):
+                installed[pkg["name"]] = _strip_v(pkg["version"])
+    for name, _label in _COMPOSER_PACKAGES:
+        if name in installed:
+            versions[name] = installed[name]
+
+    package = _obj(_load_json(root / "package.json"))
+    declared = {**_obj(package.get("dependencies")),
+                **_obj(package.get("devDependencies"))}
+    npm_lock_json = _obj(_load_json(root / "package-lock.json"))
+    npm_lock = _obj(npm_lock_json.get("packages"))
+    npm_lock_v1 = _obj(npm_lock_json.get("dependencies"))
+    for name, _label in _NPM_PACKAGES:
+        entry = npm_lock.get(f"node_modules/{name}") or npm_lock_v1.get(name)
+        if isinstance(entry, dict) and entry.get("version"):
+            versions[name] = str(entry["version"])
+        elif name in declared:
+            versions[name] = str(declared[name])
+
+    node = _first_line(root / ".nvmrc") or _obj(package.get("engines")).get("node")
+    if node:
+        versions["node"] = str(node)
+
+    targets = _browserslist(root / ".browserslistrc") or package.get("browserslist")
+    if isinstance(targets, list):
+        targets = ", ".join(str(q) for q in targets)
+    if isinstance(targets, str) and targets.strip():
+        versions["browserslist"] = targets.strip()
+
+    return versions
+
+
+def _obj(value) -> dict:
+    """`value` when it is a JSON object, else `{}` — a hand-edited manifest
+    with an unexpected shape must not crash the detection."""
+    return value if isinstance(value, dict) else {}
+
+
+def _first_line(path: Path) -> str | None:
+    """First non-empty line of a small text file, or None."""
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                return line.strip()
+    except (OSError, UnicodeDecodeError):
+        pass
+    return None
+
+
+def _browserslist(path: Path) -> str | None:
+    """Queries of a `.browserslistrc` joined by `, ` (comments and
+    `[env]` section headers dropped)."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    queries = [line.split("#", 1)[0].strip() for line in text.splitlines()]
+    queries = [q for q in queries if q and not q.startswith("[")]
+    return ", ".join(queries) or None
+
+
+def manifest_root(start: Path, git_root: Path) -> Path:
+    """The directory whose manifests describe the code at `start`: the nearest
+    one from `start` up to `git_root` that holds a `composer.json` or a
+    `package.json`, else `git_root`. The app often lives in a subdirectory of
+    the repository (e.g. `<repo>/appbase/`), where the git root has no
+    manifest at all."""
+    start = Path(start).resolve()
+    git_root = Path(git_root).resolve()
+    for directory in (start, *start.parents):
+        if (directory / "composer.json").is_file() or (directory / "package.json").is_file():
+            return directory
+        if directory == git_root:
+            break
+    return git_root
+
+
+def versions_summary(versions: dict) -> str | None:
+    """One readable line for the technical plan, e.g.
+    `PHP ^8.3, Laravel 12.28.1, Vue 3.5.13`. None when nothing was detected —
+    the plan then carries the generic framework line."""
+    labels = {"php": "PHP", "node": "Node",
+              **dict(_COMPOSER_PACKAGES), **dict(_NPM_PACKAGES)}
+    order = ["php", *(n for n, _ in _COMPOSER_PACKAGES),
+             *(n for n, _ in _NPM_PACKAGES), "node"]
+    parts = [f"{labels[name]} {versions[name]}" for name in order if name in versions]
+    if versions.get("browserslist"):
+        parts.append(f"browserslist: {versions['browserslist']}")
+    return ", ".join(parts) or None
+
+
+# ---------------------------------------------------------------------------
 # Mode detection
 # ---------------------------------------------------------------------------
 
@@ -204,6 +371,12 @@ def detect_repo_mode(start: Path | str | None = None) -> dict:
         modules       — list of detected modules (backend context)
         cwd           — the resolved starting directory
         warning       — present for the monorepo edge case, else None
+        framework_versions — installed framework / language versions read
+                        from the manifest and lock files of the nearest
+                        directory between `cwd` and the git root that has a
+                        composer.json / package.json (in every mode, as long
+                        as there is a git root); {} else
+        framework_summary  — the same as one readable line, or None
     """
     start_path = Path(start).resolve() if start else Path.cwd()
     git_root = find_git_root(start_path)
@@ -217,6 +390,8 @@ def detect_repo_mode(start: Path | str | None = None) -> dict:
         "modules": [],
         "cwd": str(start_path),
         "warning": None,
+        "framework_versions": {},
+        "framework_summary": None,
     }
 
     if git_root is None:
@@ -251,6 +426,13 @@ def detect_repo_mode(start: Path | str | None = None) -> dict:
         result["repo_name"] = repo_name(git_root)
     if backend:
         result["modules"] = detect_modules(git_root)
+
+    # Versions matter in every mode — a plain Vue / Nuxt repo is "standalone"
+    # for the contract flow but still has installed versions to respect.
+    # Read them where the app actually lives — the nearest manifest between
+    # the start directory and the git root.
+    result["framework_versions"] = detect_versions(manifest_root(start_path, git_root))
+    result["framework_summary"] = versions_summary(result["framework_versions"])
 
     return result
 

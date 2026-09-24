@@ -4,6 +4,99 @@ All notable changes to the `teamwork-tasks-from-dnr` plugin are documented in
 this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] — 2026-09-24
+
+Source: reported in a colleague's "Štyri cesty k nule" analysis, and the follow-up
+request that every plugin which plans work makes the developer think about UI/UX,
+performance, security and page reachability *while building* — the same four
+dimensions `teamwork-task-test` checks at QA time — plus a fifth, `framework`: use
+the idioms of the framework versions the project actually has installed.
+
+### Added
+- **Cross-cutting acceptance criteria for generated tasks.** A DNR describes what a
+  feature must do, and the extracted acceptance criteria followed it faithfully —
+  so a task that added a new admin section never said it must be reachable from the
+  menu or from the parent screen, and the orphan was found in QA (or by nobody).
+  Two optional task fields carry this now:
+  - `ui_surface` — `new_screen` (adds a screen / admin section / module with UI) or
+    `existing_screen` (changes one);
+  - `cross_cutting[]` — `{dimension, criterion}` with `dimension` exactly one of
+    `reachability`, `security`, `performance`, `ui_ux` (teamwork-task-test's keys)
+    and the criterion in the document language.
+- **Validator gate:** `validate_json.cross_validate` rejects a plan in which a
+  `new_screen` task has no `reachability` item. Only reachability is enforced — it is
+  the one the user asked for explicitly, and forcing the other three would push the
+  model into boilerplate on tasks where they do not apply. A deliberately URL-only
+  page passes by saying so.
+- **Rendering:** the new `scripts/cross_cutting.py` (shared by `json_to_md.py` and
+  `json_to_xlsx.py`, like `contract_render.py`) renders the items as
+  `- [ ] **<Label> (<key>):** <criterion>` under `### Prierezové požiadavky` /
+  `### Průřezové požadavky` / `### Cross-cutting requirements` — inside the
+  acceptance section, after the ordinary criteria, before `### Závislosť` and the
+  first `---`, because that block is the only one `teamwork-task-test` reads and
+  ticks. The MD conventions list mentions the sub-block only when a plan uses it.
+- **Extraction prompt §9a**, the `## Final check` list and SKILL.md Step 6 say when
+  to set each field, give sk / cs / en examples, keep the contract task free of
+  them, forbid minutes in a criterion, and ask the technical plan of a new screen to
+  name where the menu entry and the inbound link are registered.
+- **Framework line in the technical plan (`framework`).** Model knowledge of a
+  framework is always a version or two behind, so a generated plan could steer the
+  implementer to a pattern the installed Laravel / Vue / Tailwind has replaced — or
+  to one it does not support yet. `repo_detect.detect_repo_mode` (`--detect-repo`)
+  now also returns `framework_versions` and a one-line `framework_summary`, read
+  from `composer.json` (`config.platform.php` / `require.php`), `composer.lock`
+  (Laravel, Nova, Livewire, Inertia, Pest), `package-lock.json` / `package.json`
+  (Vue, Nuxt, React, Ionic, Inertia, Tailwind CSS, Vite, TypeScript), `.nvmrc` /
+  `engines.node` and `.browserslistrc` / `browserslist`. They are read from the
+  nearest directory between the start directory and the git root that holds a
+  `composer.json` / `package.json`, because the app may live in a subdirectory of
+  the repository (`<repo>/appbase/`). This works in every mode and never relies on
+  memory. A malformed file, or one with invalid bytes, is skipped. Prompt §11, its
+  Final check and SKILL.md Step 1.5 / 6 end every code task's `technical_plan` with one
+  `**Framework:**` line naming those versions ("respect the installed versions and
+  their current idioms"), or a generic line when nothing was detected (Claude.ai,
+  no lock files). It is plan context only — **never** an acceptance criterion or a
+  `cross_cutting` item: `teamwork-task-test` treats `framework` as advisory, so such
+  a checkbox could never be ticked. The schema's dimension enum stays at the four
+  keys and rejects `framework`.
+- `tests/test_cross_cutting.py` — 17 tests: no-op without the field, sk / cs / en
+  headings and labels, placement inside the acceptance block before `Závislosť`,
+  MD and XLSX byte-identical, the gold plan unchanged and still valid, the gate
+  (fires without reachability, passes with it or with a URL-only statement, ignores
+  `existing_screen`), unknown dimension / `ui_surface` / empty criterion rejected,
+  `framework` rejected as a dimension. `tests/test_repo_detect.py` +8 tests for the
+  version detection (lock wins over declared range, platform PHP wins, `v` prefix
+  stripped, `.nvmrc` / `.browserslistrc` precedence, empty without git or
+  manifests, malformed lock skipped, lock with invalid bytes skipped, app in a
+  subdirectory of the repo, npm lockfile v1).
+  Suite: 126 passed, 2 skipped (was 101 passed, 2 skipped).
+
+### Fixed
+- **Frontend mode's contract lookup aborted in zsh.** `ls docs/contracts/*/openapi.yaml
+  2>/dev/null` is a `no matches found` error in zsh (Claude Code's shell on macOS)
+  when no contract exists yet — exactly the case the step is written for. Replaced
+  by `find docs/contracts -mindepth 2 -maxdepth 2 -name openapi.yaml`.
+  Repro: `zsh -c 'ls nope/*/openapi.yaml 2>/dev/null; echo "exit=$?"'` →
+  `zsh:1: no matches found: nope/*/openapi.yaml`, `exit=1`.
+- **Step 1 could not find the orchestrator script, or could find a stale one.** The
+  lookup `find ~/.claude/plugins -path "*/teamwork-tasks-from-dnr/skills/*/scripts/…"`
+  never matches the plugin cache layout `<plugin>/<version>/skills/teamwork-tasks-from-dnr/scripts/`,
+  and its fallback `$(dirname "$0")` is `.` in zsh (`$0` is `zsh`). A pattern that did
+  match would have taken the first hit with `-print -quit` — possibly an older cached
+  release whose validator and renderers silently ignore `ui_surface` /
+  `cross_cutting`. Step 1 now uses the skill's own base directory and falls back to
+  the highest installed version (`sort -V | tail -1`).
+  Repro: `find ~/.claude/plugins -path "*/teamwork-tasks-from-dnr/skills/*/scripts/teamwork_tasks.py"`
+  → no output with 1.3.0 and 1.5.0 both in the cache.
+
+### Changed
+- `SKILL.md` gains a short **Shell portability contract** (no bare globs, no
+  bash-only expansions, `while read` for line lists, no `echo "$JSON" |`).
+
+Unchanged: the estimate never enters a description (a criterion carries no minutes),
+`md_estimate × 480` stays the hard tasklist gate, and the contract-first flow is
+untouched — a plan without the new fields renders byte-for-byte as before.
+
 ## [1.5.0] — 2026-09-22
 
 ### Fixed

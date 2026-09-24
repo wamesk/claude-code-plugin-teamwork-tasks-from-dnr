@@ -11,6 +11,24 @@ Generates a Teamwork.com import-ready **XLSX** plus a companion **Markdown** pla
 from a "Detailný návrh riešenia" (DNR) document. Works in Claude Code (local
 plugin) and Claude.ai (online skill) with the same script.
 
+## Shell portability contract
+
+The bash snippets below run in the user's login shell — **zsh on macOS** (what
+Claude Code's Bash tool starts there), bash elsewhere — and every Bash tool call
+is a fresh shell, so re-resolve `$SCRIPT` in each call that needs it. The heavy
+lifting is in the stdlib-only Python scripts; keep the shell glue to these rules:
+
+- **No bare globs that may not match** — zsh aborts with `no matches found`
+  before `2>/dev/null` applies (`ls docs/contracts/*/openapi.yaml` did exactly
+  that in a repo without contracts). Use `find`.
+- **`[ "$a" = "$b" ]`** with a single `=`; no `${!…}`, `${X@Q}`, `${X,,}` (bad
+  substitution in zsh); read line lists with `while IFS= read -r`, never an
+  unquoted `for X in $LIST` (zsh iterates once).
+- JSON goes to `jq` / Python through a file, stdin or a here-string — never
+  `echo "$JSON" | …`, whose zsh `echo` rewrites backslashes inside the JSON.
+- A failing script call is reported, not swallowed: relay the script's own
+  error output and stop, per *Error handling* below.
+
 ## Arguments
 
 User invoked this with: `$ARGUMENTS`
@@ -28,15 +46,22 @@ Supported forms:
 
 ### Step 1 — Locate the orchestrator script
 
-The Python orchestrator ships with the plugin. Find it once and reuse:
+The Python orchestrator ships with the plugin, next to this `SKILL.md`. Prefer
+that copy — it is guaranteed to match these instructions:
 
 ```bash
-SCRIPT=$(find ~/.claude/plugins -path "*/teamwork-tasks-from-dnr/skills/*/scripts/teamwork_tasks.py" -print -quit 2>/dev/null | head -1)
+# The skill's own directory, as announced when the skill loaded
+# ("Base directory for this skill: …"). Works locally and on Claude.ai.
+SCRIPT="<base directory of this skill>/scripts/teamwork_tasks.py"
 
-# Claude.ai cloud fallback: script lives next to SKILL.md
-if [ -z "$SCRIPT" ]; then
-    SCRIPT="$(dirname "$0")/scripts/teamwork_tasks.py"
+if [ ! -f "$SCRIPT" ]; then
+    # Fallback: the newest installed copy. The plugin cache layout is
+    # <plugin>/<version>/skills/teamwork-tasks-from-dnr/scripts/ — sort by version
+    # so an older cached release (without the newest renderers and validator
+    # rules) never wins. `$(dirname "$0")` is no fallback: in zsh `$0` is "zsh".
+    SCRIPT=$(find ~/.claude/plugins -path "*/skills/teamwork-tasks-from-dnr/scripts/teamwork_tasks.py" 2>/dev/null | sort -V | tail -1)
 fi
+echo "SCRIPT=${SCRIPT:-<not found>}"
 ```
 
 If still empty, tell the user the plugin is not installed correctly and stop.
@@ -50,7 +75,8 @@ Classify the repo you are running in — it decides whether the API contract is
 python3 "$SCRIPT" --detect-repo --pretty
 ```
 
-Returns `{ mode, repo_name, is_backend, is_frontend, modules, warning }`:
+Returns `{ mode, repo_name, is_backend, is_frontend, modules, warning,
+framework_versions, framework_summary }`:
 
 - **`backend`** (Laravel `composer.json`) — you will *generate* the API contract
   skeleton from the DNR.
@@ -66,7 +92,17 @@ If `warning` is present (monorepo — both Laravel and Ionic detected), relay it
 step below and behave exactly like the pre-1.3.0 skill (XLSX + MD only). Do not
 add any contract fields to the plan.
 
-Remember `mode` and `repo_name` for the rest of the run.
+`framework_versions` / `framework_summary` (since 1.6.0) are the framework and
+language versions installed in the repo. They are read from `composer.json` /
+`composer.lock` / `package.json` / `package-lock.json` / `.nvmrc` /
+`.browserslistrc` in the nearest directory between the current one and the git
+root that has a `composer.json` / `package.json` (e.g. `PHP ^8.3, Laravel
+12.28.1, Nova 5.7.4, Vue 3.5.13`). This works in any mode, `--no-contract`
+included. They are empty / `null` without a git root or without those files.
+They feed the technical plan's framework line (Step 6). If the repo you run in
+is not the project the DNR describes, ignore them and use the generic line.
+
+Remember `mode`, `repo_name` and `framework_summary` for the rest of the run.
 
 ### Step 2 — Handle `--init`
 
@@ -304,6 +340,22 @@ You (Claude) now perform the extraction:
      and in the ESTIMATED TIME column, never in a description.
    - 6-12 business-friendly tasks per tasklist.
    - Each task: `name`, `priority`, `estimated_minutes`, `goal`, `acceptance_criteria[]`, optional `dependencies[]`, `technical_plan`.
+   - **Cross-cutting requirements** (prompt §9a): a task that adds a screen /
+     admin section / module with UI gets `ui_surface: "new_screen"` and a
+     `cross_cutting[]` item with `dimension: "reachability"` — the menu entry
+     and the inbound link from the parent screen (or an explicit URL-only
+     statement) — plus the `security` / `performance` / `ui_ux` items that
+     apply. The keys are the same four dimensions `teamwork-task-test` checks
+     at QA time; the criterion text is in `detected_language`. The renderers put
+     them under `### Prierezové požiadavky` (cs `### Průřezové požadavky`,
+     en `### Cross-cutting requirements`) inside the acceptance section. Tasks
+     without UI get no such items — do not pad.
+   - **Framework line** (prompt §11): every task that writes or changes code
+     ends its `technical_plan` with one `**Framework:**` line — respect the
+     installed versions (`framework_summary` from Step 1.5) and their current
+     idioms; a generic line when the summary is `null`. Plan only — never an
+     acceptance criterion and never a `cross_cutting` item (the tester treats
+     `framework` as advisory, so such a box could never be ticked).
    - Sum of `estimated_minutes` per tasklist must match DNR "Odhad pracnosti" (1 MD = 480 min).
      **This sum wins over the methodology, and that is deliberate** — see
      *Which rule wins* below before you try to reconcile the two.
@@ -317,6 +369,10 @@ You (Claude) now perform the extraction:
    - Missing required field → add it.
    - `estimated_minutes` not divisible by 15 → round.
    - Wrong language enum → match detected.
+   - `ui_surface is 'new_screen' but cross_cutting has no 'reachability' item`
+     → add the reachability criterion (menu section + inbound link from the
+     parent screen, in the DNR's own names). Do **not** "fix" it by dropping
+     `ui_surface` from a task that really adds a screen.
 
 ### Step 6a — Generate / reference the API contract
 
@@ -346,7 +402,9 @@ Skip this whole step if `--no-contract` was passed.
 
 1. Look for an existing contract (Glob `docs/contracts/**/openapi.yaml`):
    ```bash
-   ls docs/contracts/*/openapi.yaml 2>/dev/null
+   # `find`, not `ls docs/contracts/*/openapi.yaml` — with no contract yet, zsh
+   # aborts that glob with "no matches found" instead of printing nothing.
+   find docs/contracts -mindepth 2 -maxdepth 2 -name openapi.yaml 2>/dev/null
    ```
 2. If found, set `contract_ref` on every API-touching task to that slug (read
    its `info.version` for the version). **Never generate or modify** the
@@ -522,6 +580,10 @@ Key options:
   inspect it, `unzip <file>.xlsx` reveals the standard XML structure.
 - The MD output is designed for direct use in Claude Code's **Plan mode**:
   copy a single task description and paste it as the plan prompt.
+- **Cross-cutting requirements (since 1.6.0)** are additive too: a plan without
+  `ui_surface` / `cross_cutting` renders byte-for-byte as before. They never
+  touch the estimate — no minutes in a criterion — and the contract task never
+  carries them.
 - For DNR documents in non-WAME format (no "Rozšírenie č. N" headings), fall
   back to detecting any top-level numbered sections (`## 4.1`, `# Module 1`,
   etc.) and emit a warning.

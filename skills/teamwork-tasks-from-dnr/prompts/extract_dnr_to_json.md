@@ -190,6 +190,61 @@ single short sentence. They become checkbox items in the output MD.
 - "Add HasMany relation to Invoice model"
 - "Implement recalculateStatus() method"
 
+### 9a. Task `ui_surface` and `cross_cutting` (cross-cutting requirements)
+
+A DNR says what a feature must *do*. It rarely says whether the new screen can
+be **found** — a menu entry, links from the screen a user would naturally start
+on — who may open it, or what its list does with a year of data.
+`teamwork-task-test` checks exactly these four things at QA time, under the
+keys `ui_ux`, `performance`, `security` and `reachability`. Write the ones that
+apply into the task so they get built, not discovered in QA.
+
+**`ui_surface`** (optional enum):
+
+- `"new_screen"` — the task adds a screen a user navigates to: a page, a route
+  rendering a view, an admin section (Nova resource / lens / dashboard / tool),
+  an SPA route, or a module that comes with its own UI.
+- `"existing_screen"` — the task changes the UI of a screen that already exists
+  (a new field, filter, action button, column, modal).
+- omit it — no UI at all (migrations, models, services, jobs, mailables, tests,
+  the "Definovať API kontrakt" task).
+
+**`cross_cutting`** (optional array of `{ "dimension", "criterion" }`):
+
+- `dimension` is exactly one of `reachability`, `security`, `performance`,
+  `ui_ux`. `criterion` is one short, verifiable sentence **in the document
+  language** (`sk` / `cs` / `en`), written like an acceptance criterion — no
+  file paths, no class names, no minutes (those belong in `technical_plan` and
+  `estimated_minutes`).
+- **`ui_surface: "new_screen"` requires a `reachability` item** — the validator
+  rejects the plan without one. Name the menu section and the inbound link from
+  the parent screen, using the DNR's own names for them. A page that is
+  deliberately reachable only by URL (an e-mail deep link, a landing page) says
+  so instead — that is a valid reachability statement.
+- Add the other dimensions **only where they apply**:
+  - `security` — the task adds a screen, action, button, endpoint or form input:
+    who may see and use it, that it only touches the user's own company's
+    records, and that menu visibility and authorization agree.
+  - `performance` — the task adds or changes a list, export, import, report,
+    batch job or data migration over a table that grows; name the volume the
+    DNR implies (e.g. "10 000 zmlúv").
+  - `ui_ux` — the task has a `ui_surface`: empty / loading / error states, a
+    disabled control shows why, confirmations for destructive actions, texts
+    through translations.
+- Do **not** repeat these items in `acceptance_criteria` — the renderer places
+  them under their own sub-heading (`### Prierezové požiadavky` /
+  `### Průřezové požadavky` / `### Cross-cutting requirements`) inside the
+  acceptance section, where `teamwork-task-test` can tick them.
+- Do not pad: a migration or a pure service task normally has no
+  `cross_cutting` at all; a bulk job may carry only `performance`.
+
+Examples (`new_screen`):
+
+- sk: `{"dimension": "reachability", "criterion": "Sekcia Splátky je dostupná z menu Fakturácia a z detailu zmluvy (záložka Splátky)."}`
+- cs: `{"dimension": "reachability", "criterion": "Sekce Splátky je dostupná z menu Fakturace a z detailu smlouvy (záložka Splátky)."}`
+- en: `{"dimension": "reachability", "criterion": "The Instalments section is reachable from the Billing menu and from the contract detail (Instalments tab)."}`
+- sk: `{"dimension": "security", "criterion": "Sekciu vidí a upravuje len rola Účtovník a len pre zmluvy vlastnej firmy; cudzia zmluva vráti 403."}`
+
 ### 10. Task `dependencies` (optional)
 
 Reference earlier tasks **by name** that must be done first. Use only when the
@@ -215,6 +270,32 @@ Markdown-formatted detailed plan for the implementer:
 - Mention specific existing files to reference (e.g. "pattern z `GenerateInvoiceTrait::createInvoice()`").
 
 This is the developer's full execution recipe.
+
+For a task with `ui_surface: "new_screen"`, the plan also says **where** the
+reachability is wired: the menu registration (e.g. the Nova main-menu section in
+the service provider, the SPA router + navigation component) and the relation
+field / tab / button on the parent screen that links to it.
+
+**Framework line.** Every task that writes or changes code ends its
+`technical_plan` with one short line, in the document language, telling the
+implementer to respect the installed framework versions and their current
+idioms. Use the `framework_summary` the SKILL passes from repo detection:
+
+- with a summary — sk: `**Framework:** rešpektovať nainštalované verzie
+  (PHP 8.3, Laravel 12.28.1, Nova 5.7.4) a ich aktuálne idiómy — overiť
+  v dokumentácii danej verzie, nič zastarané ani novšie než nainštalované.`
+  (en: `**Framework:** respect the installed versions (…) and their current
+  idioms — check that version's docs; nothing deprecated, nothing newer than
+  installed.`)
+- without one — the generic line, sk: `**Framework:** rešpektovať verzie
+  nainštalované v cieľovom repozitári (composer.lock, package.json) a ich
+  aktuálne idiómy.`
+
+Never invent a version the summary does not contain. The line is plan context
+only — **never** an `acceptance_criteria` entry and never a `cross_cutting`
+item (the schema rejects a `framework` dimension; `teamwork-task-test` treats
+framework best practices as advisory, so such a checkbox could never be
+ticked). The contract task and tasks without code get no framework line.
 
 ### 11a. Contract-first fields (backend mode only)
 
@@ -274,6 +355,8 @@ linked tasklist (`section_ref` prefix `.0`, e.g. `4.1.0`):
 
 #### BE vs FE tasks touching the contract
 
+- The contract task gets neither `ui_surface` nor `cross_cutting` — it is
+  specification work, not a screen.
 - **BE task** (`role: "BE"`): add an acceptance criterion that **real responses
   match the contract** (e.g. "Reálne odpovede endpointov zodpovedajú kontraktu
   docs/contracts/<slug>/openapi.yaml."), and add to `technical_plan` a **proposal**
@@ -328,6 +411,16 @@ Before returning, verify:
 - [ ] Language is consistent across all output strings.
 - [ ] Task names are business-friendly.
 - [ ] Acceptance criteria are user-facing, not implementation details.
+- [ ] Every task that adds a screen has `ui_surface: "new_screen"` and a
+      `reachability` item in `cross_cutting` (menu entry + inbound link, or an
+      explicit URL-only statement); UI-changing tasks have
+      `ui_surface: "existing_screen"`.
+- [ ] `cross_cutting` items use only `reachability` / `security` /
+      `performance` / `ui_ux`, are in the document language, carry no minutes,
+      and are not duplicated in `acceptance_criteria`.
+- [ ] Every code task's `technical_plan` ends with the `**Framework:**` line
+      (detected versions, or the generic line); no framework item appears in
+      `acceptance_criteria` or `cross_cutting`.
 - [ ] Each tasklist `name` starts with `<section_ref> ` (e.g. `4.1 `).
 - [ ] Each task `name` starts with `<section_ref>.<index> ` (e.g. `4.1.1 `).
 - [ ] Description sub-headings use `** … **` bold markers, not `==`.
