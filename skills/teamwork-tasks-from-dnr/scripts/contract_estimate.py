@@ -8,31 +8,32 @@ response schemas, the data model and the YAML skeleton, then reviewing it — no
 free overhead. The size scales with how much surface the contract covers, so the
 estimate is derived from the number of endpoints and entities:
 
-    minutes = 45 (base)  +  15 per endpoint  +  15 per entity
+    minutes = 30 (base)  +  7.5 per endpoint  +  7.5 per entity
 
-The result is always a multiple of 15 and is clamped to the same [60, 480]
-window every other task in this skill uses. The three constants below ARE the
+rounded half-up to a multiple of 15 and clamped to [30, 480]. Version 3 of the
+methodology sizes work for Claude Code writing it, which halved the v2 figures
+(45 + 15 per endpoint + 15 per entity, at least 60). The three constants below ARE the
 estimate — they are not a raw figure waiting for a speedup or a buffer to be
 applied on top. See the `## WAME estimate methodology` block in SKILL.md
-(`wame-estimate-v2`), which estimates one number directly.
+(`wame-estimate-v3`), which estimates one number directly.
 
 Stdlib only.
 """
 from __future__ import annotations
 
-BASE_MINUTES = 45
-PER_ENDPOINT = 15
-PER_ENTITY = 15
-MIN_MINUTES = 60
+BASE_MINUTES = 30
+PER_ENDPOINT = 7.5
+PER_ENTITY = 7.5
+MIN_MINUTES = 30
 MAX_MINUTES = 480
 STEP = 15
 
 
 def estimate_minutes(num_endpoints: int, num_entities: int) -> int:
-    """Return the contract-task estimate in minutes (multiple of 15, 60..480)."""
+    """Return the contract-task estimate in minutes (multiple of 15, 30..480)."""
     raw = BASE_MINUTES + PER_ENDPOINT * max(0, int(num_endpoints)) \
         + PER_ENTITY * max(0, int(num_entities))
-    rounded = round(raw / STEP) * STEP
+    rounded = int(raw / STEP + 0.5) * STEP
     return max(MIN_MINUTES, min(MAX_MINUTES, rounded))
 
 

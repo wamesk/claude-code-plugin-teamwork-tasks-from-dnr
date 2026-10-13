@@ -4,6 +4,28 @@ All notable changes to the `teamwork-tasks-from-dnr` plugin are documented in
 this file. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] — 2026-10-13
+
+### Changed
+- **Estimate methodology `wame-estimate-v3`.** The shared `## WAME estimate
+  methodology` block now says Claude Code writes the code and the engineer
+  decides and reviews, and the number is the session time to a done, green
+  outcome. The anchors are halved (one screen end to end 120 → 60, new
+  `wamesk/*` module 300 → 150, bug with a stack trace 60 → 30) and three anchors
+  are new: a query or service method with its rare cases (45), a complex screen
+  that saves several records in one transaction (120), a reusable package with
+  replaced framework UI components (150). A *Calibration* paragraph records the
+  measured pairs that moved them: on 2026-10-13 a settings field with migration,
+  model rule and three test files was estimated 90 minutes and took 40, and a
+  53.5 h feature plan was rejected as padded and accepted at 27.75 h. The block
+  stays identical in all five plugins that carry it.
+- `scripts/contract_estimate.py`: the API-contract task is halved to
+  `30 + 7.5 per endpoint + 7.5 per entity`, rounded half-up to 15, clamped to
+  30–480 (was `45 + 15 + 15`, at least 60). Tests follow.
+- `prompts/extract_dnr_to_json.md`: the example durations are v3-sized
+  (calculator service ≈ 2–3 h, migration ≈ 30–60 min, tests ≈ 30–90 min). The
+  tasklist sum still wins over the methodology.
+
 ## [1.6.0] — 2026-09-24
 
 Source: reported in a colleague's "Štyri cesty k nule" analysis, and the follow-up

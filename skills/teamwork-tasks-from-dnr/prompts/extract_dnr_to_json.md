@@ -149,12 +149,13 @@ Apply config hints (`priorities.high_keywords`, etc.) if provided.
 
 - Integer, multiple of 15.
 - Sum per tasklist must equal `md_estimate * 480` minutes (1 MD = 8h = 480 min).
-- Distribute proportionally to complexity (e.g. a calculator service ≈ 5h, a
-  migration ≈ 1-2h, tests ≈ 1-3h).
+- Distribute proportionally to complexity (e.g. a calculator service ≈ 2–3 h, a
+  migration ≈ 30–60 min, tests ≈ 30–90 min).
 - **Apply the WAME estimate methodology defined in `SKILL.md` (the
   `## WAME estimate methodology` H2 block):** each task gets one number picked
   against the anchors there. There is no speedup factor and no risk buffer —
-  version 2 of the methodology removed both.
+  version 2 of the methodology removed both, and version 3 sizes the anchors
+  for Claude Code writing the code.
 - **The tasklist sum wins over the methodology.** `md_estimate × 480` is
   enforced by `scripts/validate_json.py` and a plan that misses it is rejected,
   so the methodology decides how the budget is *split*, not how big it is. Fit

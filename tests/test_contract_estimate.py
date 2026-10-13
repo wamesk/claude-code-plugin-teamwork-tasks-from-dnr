@@ -3,13 +3,18 @@ import contract_estimate as ce
 
 
 def test_minimum_clamp():
-    # 45 + 0 + 0 = 45 -> clamped up to 60.
-    assert ce.estimate_minutes(0, 0) == 60
+    # 30 + 0 + 0 = 30, the floor.
+    assert ce.estimate_minutes(0, 0) == 30
 
 
 def test_typical():
-    # 45 + 15*5 + 15*3 = 165.
-    assert ce.estimate_minutes(5, 3) == 165
+    # 30 + 7.5*5 + 7.5*3 = 90.
+    assert ce.estimate_minutes(5, 3) == 90
+
+
+def test_rounds_half_up():
+    # 30 + 7.5 = 37.5 -> 45, not the banker's 30.
+    assert ce.estimate_minutes(1, 0) == 45
 
 
 def test_maximum_clamp():
@@ -21,11 +26,11 @@ def test_always_multiple_of_15():
         for entities in range(0, 20):
             minutes = ce.estimate_minutes(endpoints, entities)
             assert minutes % 15 == 0
-            assert 60 <= minutes <= 480
+            assert 30 <= minutes <= 480
 
 
 def test_negative_counts_are_floored():
-    assert ce.estimate_minutes(-3, -1) == 60
+    assert ce.estimate_minutes(-3, -1) == 30
 
 
 def test_count_contract_surface():
@@ -41,5 +46,5 @@ def test_estimate_from_contract():
         "openapi": {"endpoints": [{"method": "get"}] * 4},
         "data_model": {"entities": [{"name": "A"}, {"name": "B"}]},
     }
-    # 45 + 15*4 + 15*2 = 135.
-    assert ce.estimate_from_contract(contract) == 135
+    # 30 + 7.5*4 + 7.5*2 = 75.
+    assert ce.estimate_from_contract(contract) == 75
