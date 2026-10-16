@@ -27,6 +27,8 @@ Z DNR dokumentu (`.docx`, `.pdf`, `.md`):
 /plugin install teamwork-tasks-from-dnr@wame
 ```
 
+Plugin vyžaduje plugin `work-rules` (skill `wame-estimate` — metodika odhadov `wame-estimate-v3`); je deklarovaný v `dependencies`, takže sa nainštaluje spolu s ním. Ak chýba: `/plugin install work-rules@wame`.
+
 ### Claude.ai (online)
 
 1. Stiahni priečinok `skills/teamwork-tasks-from-dnr/` z tohto repa.
